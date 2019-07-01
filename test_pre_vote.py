@@ -1,17 +1,16 @@
 import os
 
-from iconsdk.builder.transaction_builder import CallTransactionBuilder, DeployTransactionBuilder, TransactionBuilder
+from iconsdk.builder.transaction_builder import CallTransactionBuilder
 from iconsdk.icon_service import IconService
-from iconsdk.libs.in_memory_zip import gen_deploy_data_content
 from iconsdk.providers.http_provider import HTTPProvider
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
-from tbears.libs.icon_integrate_test import IconIntegrateTestBase, SCORE_INSTALL_ADDRESS
+from tbears.libs.icon_integrate_test import IconIntegrateTestBase
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
-class TestInit(IconIntegrateTestBase):
+class TestPreVote(IconIntegrateTestBase):
     TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
     SYSTEM_ADDRESS = "cx0000000000000000000000000000000000000000"
     GOVERNANCE_ADDRESS = "cx0000000000000000000000000000000000000001"
