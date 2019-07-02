@@ -79,6 +79,37 @@ class TestDecentralization(IconIntegrateTestBase):
 
         return signed_transaction
 
+    def _unregister_prep_tx(self, key_wallet: 'KeyWallet'):
+        transaction = CallTransactionBuilder(). \
+            from_(key_wallet.get_address()). \
+            to(self.SYSTEM_ADDRESS). \
+            value(0). \
+            step_limit(1000000). \
+            nid(3). \
+            nonce(1). \
+            method("unregitserPRep"). \
+            build()
+
+        signed_transaction = SignedTransaction(transaction, key_wallet)
+
+        return signed_transaction
+
+    def _set_prep_tx(self, key_wallet: 'KeyWallet', set_data: dict):
+        transaction = CallTransactionBuilder(). \
+            from_(key_wallet.get_address()). \
+            to(self.SYSTEM_ADDRESS). \
+            value(0). \
+            step_limit(1000000). \
+            nid(3). \
+            nonce(1). \
+            method("setPRep"). \
+            params(set_data). \
+            build()
+
+        signed_transaction = SignedTransaction(transaction, key_wallet)
+
+        return signed_transaction
+
     def _distribute_icx(self, addresses: List['KeyWallet']):
         tx_list = []
         for key_wallet in addresses:
@@ -113,24 +144,24 @@ class TestDecentralization(IconIntegrateTestBase):
 
         # stake
         stake_tx_list = []
-        for i in range(22, 25):
+        for i in range(31, 34):
             tx = self._stake(self._wallet_array[i], hex(int(self.total_supply*0.03)))
             stake_tx_list.append(tx)
         tx_results = self.process_transaction_bulk(stake_tx_list, self.icon_service)
 
         # delegate
         delegation_data1 = self._make_delegation_data(self._wallet_array[:10])
-        delegation_tx1 = self._delegate(self._wallet_array[22], delegation_data1)
+        delegation_tx1 = self._delegate(self._wallet_array[31], delegation_data1)
         delegation_data2 = self._make_delegation_data(self._wallet_array[10:20])
-        delegation_tx2 = self._delegate(self._wallet_array[23], delegation_data2)
-        delegation_data3 = self._make_delegation_data(self._wallet_array[20:22])
-        delegation_tx3 = self._delegate(self._wallet_array[24], delegation_data3)
+        delegation_tx2 = self._delegate(self._wallet_array[32], delegation_data2)
+        delegation_data3 = self._make_delegation_data(self._wallet_array[20:30])
+        delegation_tx3 = self._delegate(self._wallet_array[33], delegation_data3)
 
         tx_results = self.process_transaction_bulk([delegation_tx1, delegation_tx2, delegation_tx3], self.icon_service)
 
         # register prep
         reg_tx_list = []
-        for i in range(22):
+        for i in range(30):
             params = {
                 "name": f"banana node{i}",
                 "email": f"banana@banana{i}.com",
@@ -147,6 +178,44 @@ class TestDecentralization(IconIntegrateTestBase):
         set_revision_tx = self._set_decentralization_revision()
         tx_result = self.process_transaction(set_revision_tx, self.icon_service)
 
+        call = CallBuilder().from_(self._test1.get_address()) \
+            .to(self.SYSTEM_ADDRESS) \
+            .method("getMainPRepList") \
+            .params({"foo": "bar"}) \
+            .build()
+        response = self.process_call(call, self.icon_service)
+
+    def test_2_normal_account_set_prep(self):
+        params = {
+            "name": "apple node",
+            "email": "apple@banana.com",
+            "website": "https://apple.com",
+            "details": "detail",
+            "p2pEndPoint": "target://123.213.123.123:7100",
+        }
+        tx = self._set_prep_tx(self._wallet_array[40], params)
+        tx_result = self.process_transaction(tx, self.icon_service)
+        print(tx_result)
+        self.assertEqual(tx_result['status'], 0)
+
+    def test_3_unregistered_prep_set_prep(self):
+        tx = self._unregister_prep_tx(self._wallet_array[0])
+        tx_result = self.process_transaction(tx, self.icon_service)
+        self.assertEqual(tx_result['status'], 1)
+
+        params = {
+            "name": "apple node",
+            "email": "apple@banana.com",
+            "website": "https://apple.com",
+            "details": "detail",
+            "p2pEndPoint": "target://123.213.123.123:7100",
+        }
+
+        tx = self._set_prep_tx(self._wallet_array[0], params)
+        tx_result = self.process_transaction(tx, self.icon_service)
+        self.assertEqual(tx_result['status'], 0)
+
+    def test_4_top_sub_prep_upgrade(self):
         call = CallBuilder().from_(self._test1.get_address()) \
             .to(self.SYSTEM_ADDRESS) \
             .method("getMainPRepList") \
