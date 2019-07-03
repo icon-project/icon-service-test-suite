@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 from iconsdk.builder.transaction_builder import TransactionBuilder
@@ -8,7 +7,7 @@ from iconsdk.wallet.wallet import KeyWallet
 from .base import Base
 
 
-class TestPreVote(Base):
+class TestPRep(Base):
     TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
 
     def setUp(self):
@@ -18,7 +17,7 @@ class TestPreVote(Base):
         tx_list = []
         for key_wallet in addresses:
             transaction = TransactionBuilder(). \
-                value(10**18). \
+                value(10**20). \
                 from_(self._test1.get_address()). \
                 to(key_wallet.get_address()). \
                 nid(3). \
@@ -32,7 +31,7 @@ class TestPreVote(Base):
 
     def test_1_register_one_prep_invalid_case1(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**16)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
@@ -47,10 +46,11 @@ class TestPreVote(Base):
         self.assertEqual(tx_result['status'], 0)
 
         response = self.get_prep(account)
+        self.assertTrue(response['message'].startswith('P-Rep not found: '))
 
     def test_2_register_one_prep_invalid_case2(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**16)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
@@ -60,13 +60,16 @@ class TestPreVote(Base):
             "details": "detail",
             "p2pEndPoint": "target://123.213.123.123:7100"
         }
-        tx = self.create_register_prep_tx(account, params, step_limit=10000000)
+        tx = self.create_register_prep_tx(account, params)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 0)
 
+        response = self.get_prep(account)
+        self.assertTrue(response['message'].startswith('P-Rep not found: '))
+
     def test_3_register_one_prep(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**16)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
@@ -77,38 +80,56 @@ class TestPreVote(Base):
             "publicKey": "0x1234",
             "p2pEndPoint": "target://123.213.123.123:7100"
         }
-        tx = self.create_register_prep_tx(account, params, step_limit=10000000)
+        tx = self.create_register_prep_tx(account, params)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
 
         # set prep on pre-voting
-        params = {
+        params1 = {
             "name": "apple node",
             "email": "apple@banana.com",
             "website": "https://apple.com",
             "details": "detail",
             "p2pEndPoint": "target://123.213.123.123:7100"
         }
-        tx = self.create_set_prep_tx(account, set_data=params, step_limit=10000000)
+        tx = self.create_set_prep_tx(account, set_data=params1)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
+
+        response = self.get_prep(account)
+        prep_data = response['registration']
+        self.assertEqual(prep_data['name'], params1['name'])
+        self.assertEqual(prep_data['email'], params1['email'])
+        self.assertEqual(prep_data['website'], params1['website'])
+        self.assertEqual(prep_data['details'], params1['details'])
+        self.assertEqual(prep_data['p2pEndPoint'], params1['p2pEndPoint'])
 
         # set irep on pre-voting
         irep = 40000
         params = {
-            "name": "apple node",
+            "name": "apple node2",
             "email": "apple@banana.com",
             "website": "https://apple.com",
             "details": "detail",
             "p2pEndPoint": "target://123.213.123.123:7100",
         }
-        tx = self.create_set_prep_tx(self._wallet_array[0], irep, params, step_limit=10000000)
+        tx = self.create_set_prep_tx(account, irep, params)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 0)
 
+        response = self.get_prep(account)
+        prep_data = response['registration']
+        self.assertEqual(prep_data['name'], params1['name'])
+        self.assertEqual(prep_data['email'], params1['email'])
+        self.assertEqual(prep_data['website'], params1['website'])
+        self.assertEqual(prep_data['details'], params1['details'])
+        self.assertEqual(prep_data['p2pEndPoint'], params1['p2pEndPoint'])
+        self.assertNotEqual(prep_data['irep'], hex(irep))
+
     def test_4_register_100_preps_and_check_total_delegated(self):
         accounts = [KeyWallet.create() for _ in range(100)]
-        self._distribute_icx(accounts)
+        tx_list = self._distribute_icx(accounts)
+        self.process_transaction_bulk(tx_list, self.icon_service)
         tx_list = []
         for i in range(100):
             params = {
@@ -131,7 +152,7 @@ class TestPreVote(Base):
         # distribute icx
         delegators = [KeyWallet.create() for _ in range(10)]
         tx_list = self._distribute_icx(delegators)
-        tx_result = self.process_transaction_bulk(tx_list, self.icon_service)
+        self.process_transaction_bulk(tx_list, self.icon_service)
 
         # stake
         stake_tx_list = []
@@ -139,7 +160,7 @@ class TestPreVote(Base):
             tx = self.create_set_stake_tx(key_wallet, 10**18)
             stake_tx_list.append(tx)
 
-        tx_results = self.process_transaction_bulk(stake_tx_list, self.icon_service)
+        self.process_transaction_bulk(stake_tx_list, self.icon_service)
 
         # delegate
         delegate_info_list = []
@@ -153,7 +174,8 @@ class TestPreVote(Base):
             tx = self.create_set_delegation_tx(key_wallet, delegate_info_list[index*10:index*10+10],
                                                step_limit=10000000)
             delegate_tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(delegate_tx_list, self.icon_service)
+        self.process_transaction_bulk(delegate_tx_list, self.icon_service)
 
         # check total Delegated 50 to 70
         response_50_to_70 = self.get_prep_list(50, 70)
+        print(response_50_to_70)

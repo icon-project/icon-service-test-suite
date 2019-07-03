@@ -32,7 +32,7 @@ class TestIScore(Base):
         stake_value: int = self.MIN_DELEGATION * 1000
         delegation_value: int = self.MIN_DELEGATION * 100
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value + 10**18)
         self.process_transaction(tx, self.icon_service)
         prep = self._test1
 
