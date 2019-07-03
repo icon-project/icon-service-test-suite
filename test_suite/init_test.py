@@ -21,6 +21,8 @@ class TestInit(Base):
         # deploy governance SCORE
         for score in GOVERNANCE_SCORES:
             score_path = os.path.abspath(os.path.join(DIR_PATH, f'./data/{score}.zip'))
-            self.create_deploy_score_tx(score_path, self._test1, GOVERNANCE_ADDRESS)
+            tx = self.create_deploy_score_tx(score_path, self._test1, GOVERNANCE_ADDRESS)
+            self.process_transaction(tx, self.icon_service)
 
-        self.create_set_revision_tx(self._test1, REV_IISS)
+        tx = self.create_set_revision_tx(self._test1, REV_IISS)
+        self.process_transaction(tx, self.icon_service)

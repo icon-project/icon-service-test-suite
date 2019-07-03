@@ -18,7 +18,6 @@ DEFAULT_NID = 3
 SYSTEM_ADDRESS = "cx0000000000000000000000000000000000000000"
 GOVERNANCE_ADDRESS = "cx0000000000000000000000000000000000000001"
 TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
-SCORE_PROJECT = os.path.abspath(os.path.join(DIR_PATH, '../'))
 
 
 class Base(IconIntegrateTestBase):
@@ -90,7 +89,7 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_transfer_icx_tx(from_: 'KeyWallet',
-                               to_: 'KeyWallet',
+                               to_: str,
                                value: int,
                                step_limit: int = DEFAULT_STEP_LIMIT,
                                nid: int = DEFAULT_NID,
