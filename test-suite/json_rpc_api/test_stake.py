@@ -1,4 +1,3 @@
-import os
 from random import randrange
 
 from iconsdk.builder.transaction_builder import TransactionBuilder
@@ -9,15 +8,8 @@ from iconservice.icon_constant import ConfigKey
 
 from .base import Base
 
-DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
-GOVERNANCE_SCORES = [
-    '769282ab3dee78378d7443fe6c1344c76e718734e7f581961717f12a121a2be8',
-    '83537e56c647fbf0b726286ee08d31f12dba1bf7e50e8119eaffbf48004f237f'
-]
-
-
-class TestScoreTest(Base):
+class TestStake(Base):
 
     def setUp(self):
         super().setUp()
