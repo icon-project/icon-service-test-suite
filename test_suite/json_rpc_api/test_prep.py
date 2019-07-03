@@ -10,9 +10,6 @@ from .base import Base
 class TestPRep(Base):
     TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
 
-    def setUp(self):
-        super().setUp()
-
     def _distribute_icx(self, addresses: List['KeyWallet']):
         tx_list = []
         for key_wallet in addresses:

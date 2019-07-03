@@ -9,147 +9,12 @@ if TYPE_CHECKING:
 
 
 class TestDelegation(Base):
-    def setUp(self):
-        super().setUp()
-
     def _get_block_height(self) -> int:
         block_height: int = 0
         if self.icon_service:
             block = self.icon_service.get_block("latest")
             block_height = block['height']
         return block_height
-
-    # def _init_prep(self, accounts: list):
-    #     tx_list: list = []
-    #     for i, account in enumerate(accounts):
-    #         info: dict = {
-    #             "name": f"node{i}",
-    #             "email": f"node{i}@example.com",
-    #             "website": f"https://node{i}.example.com",
-    #             "details": f"https://node{i}.example.com/details",
-    #             "p2pEndPoint": f"https://node{i}.example.com:7100",
-    #             "publicKey": f"0x{b'00'.hex()}"
-    #         }
-    #
-    #         transaction = CallTransactionBuilder() \
-    #             .from_(account.get_address()) \
-    #             .to(self.SYSTEM_ADDRESS) \
-    #             .step_limit(10_000_000) \
-    #             .nid(3) \
-    #             .nonce(100) \
-    #             .method("registerPRep") \
-    #             .params(info) \
-    #             .build()
-    #         signed_transaction = SignedTransaction(transaction, account)
-    #         tx_list.append(signed_transaction)
-    #     tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
-    #     for tx_result in tx_results:
-    #         self.assertTrue('status' in tx_result)
-    #         self.assertEqual(1, tx_result['status'])
-    #
-    # def _set_stake_bulk(self, accounts: list, get_stake: callable):
-    #     # set stake
-    #     tx_list: list = []
-    #     for i, account in enumerate(accounts):
-    #         stake_value: int = get_stake(i)
-    #         transaction = CallTransactionBuilder() \
-    #             .from_(accounts[i].get_address()) \
-    #             .to(self.SYSTEM_ADDRESS) \
-    #             .step_limit(10_000_000) \
-    #             .nid(3) \
-    #             .nonce(100) \
-    #             .method("setStake") \
-    #             .params({"value": stake_value}) \
-    #             .build()
-    #         signed_transaction = SignedTransaction(transaction, accounts[i])
-    #         tx_list.append(signed_transaction)
-    #     tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
-    #     for tx_result in tx_results:
-    #         self.assertTrue('status' in tx_result)
-    #         self.assertEqual(1, tx_result['status'])
-    #
-    # def _get_stake_bulk(self, accounts: list, get_stake: callable):
-    #     for i, account in enumerate(accounts):
-    #         stake_value: int = get_stake(i)
-    #         call = CallBuilder().from_(account.get_address()) \
-    #             .to(self.SYSTEM_ADDRESS) \
-    #             .method("getStake") \
-    #             .params({"address": account.get_address()}) \
-    #             .build()
-    #         response = self.process_call(call, self.icon_service)
-    #         expected_result = {
-    #             "stake": hex(stake_value)
-    #         }
-    #         self.assertEqual(expected_result, response)
-    #
-    # def _set_delegate(self,
-    #                   account: 'KeyWallet',
-    #                   accounts: list,
-    #                   cnt: int,
-    #                   start_index: int,
-    #                   delegation_value: int):
-    #     delegations: list = []
-    #     if delegation_value > 0:
-    #         for i in range(start_index, start_index + cnt):
-    #             delegation: dict = {
-    #                 "address": str(accounts[i].get_address()),
-    #                 "value": hex(delegation_value)
-    #             }
-    #             delegations.append(delegation)
-    #     transaction = CallTransactionBuilder() \
-    #         .from_(account.get_address()) \
-    #         .to(self.SYSTEM_ADDRESS) \
-    #         .step_limit(10_000_000) \
-    #         .nid(3) \
-    #         .nonce(100) \
-    #         .method("setDelegation") \
-    #         .params({"delegations": delegations}) \
-    #         .build()
-    #     signed_transaction = SignedTransaction(transaction, account)
-    #     tx_result = self.process_transaction(signed_transaction, self.icon_service)
-    #     self.assertTrue('status' in tx_result)
-    #     self.assertEqual(1, tx_result['status'])
-    #
-    # def _get_delegate(self,
-    #                   account: 'KeyWallet',
-    #                   accounts: list,
-    #                   cnt: int,
-    #                   start_index: int,
-    #                   init_balance: int,
-    #                   delegation_value: int):
-    #     expected_delegations: list = []
-    #     expected_total_delegation: int = delegation_value * cnt
-    #     expected_voting_power: int = init_balance - expected_total_delegation
-    #     if delegation_value > 0:
-    #         for i in range(start_index, start_index + cnt):
-    #             delegation: dict = {
-    #                 "address": str(accounts[i].get_address()),
-    #                 "value": hex(delegation_value)
-    #             }
-    #             expected_delegations.append(delegation)
-    #     call = CallBuilder().from_(account.get_address()) \
-    #         .to(self.SYSTEM_ADDRESS) \
-    #         .method("getDelegation") \
-    #         .params({"address": account.get_address()}) \
-    #         .build()
-    #     response = self.process_call(call, self.icon_service)
-    #     expected_result = {
-    #         "delegations": expected_delegations,
-    #         "totalDelegated": hex(expected_total_delegation),
-    #         "votingPower": hex(expected_voting_power)
-    #     }
-    #     self.assertEqual(expected_result, response)
-    #
-    # def _get_prep_list(self, account: 'KeyWallet', expected_delegated: int):
-    #     call = CallBuilder().from_(account.get_address()) \
-    #         .to(self.SYSTEM_ADDRESS) \
-    #         .method("getPRepList") \
-    #         .params({}) \
-    #         .build()
-    #
-    #     response = self.process_call(call, self.icon_service)
-    #     total_delegated = response["totalDelegated"]
-    #     self.assertEqual(hex(expected_delegated), total_delegated)
 
     def test_delegate3(self):
         init_balance: int = 1000
@@ -160,13 +25,13 @@ class TestDelegation(Base):
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # register prep user0
         tx: 'SignedTransaction' = self.create_register_prep_tx(accounts[0])
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -174,14 +39,14 @@ class TestDelegation(Base):
         stake_value: int = 100
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # get stake user0 ~ 1 100%
         for account in accounts:
             response: dict = self.get_stake(account)
-            expected_result = {
+            expected_result: dict = {
                 "stake": hex(stake_value)
             }
             self.assertEqual(expected_result, response)
@@ -190,7 +55,7 @@ class TestDelegation(Base):
         delegation_value: int = stake_value
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -210,7 +75,7 @@ class TestDelegation(Base):
         delegation_value: int = stake_value // 2
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -230,7 +95,7 @@ class TestDelegation(Base):
         delegation_value: int = 0
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -255,14 +120,14 @@ class TestDelegation(Base):
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # register prep user0 ~ 1
         for account in accounts:
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
@@ -270,14 +135,14 @@ class TestDelegation(Base):
         stake_value: int = 100
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # get stake user0 ~ 1 100%
         for account in accounts:
             response: dict = self.get_stake(account)
-            expected_result = {
+            expected_result: dict = {
                 "stake": hex(stake_value)
             }
             self.assertEqual(expected_result, response)
@@ -286,7 +151,7 @@ class TestDelegation(Base):
         delegation_value: int = stake_value
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -306,7 +171,7 @@ class TestDelegation(Base):
         delegation_value: int = stake_value // 2
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -326,7 +191,7 @@ class TestDelegation(Base):
         delegation_value: int = 0
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -351,14 +216,14 @@ class TestDelegation(Base):
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # register prep user0 ~ 2
         for account in accounts:
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
@@ -366,14 +231,14 @@ class TestDelegation(Base):
         stake_value: int = 100
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
-            tx_result = self.process_transaction(tx, self.icon_service)
+            tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # get stake user0 ~ 1 100%
         for account in accounts:
             response: dict = self.get_stake(account)
-            expected_result = {
+            expected_result: dict = {
                 "stake": hex(stake_value)
             }
             self.assertEqual(expected_result, response)
@@ -386,7 +251,7 @@ class TestDelegation(Base):
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -414,7 +279,7 @@ class TestDelegation(Base):
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -444,7 +309,7 @@ class TestDelegation(Base):
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -454,7 +319,7 @@ class TestDelegation(Base):
         for account in accounts:
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -488,7 +353,7 @@ class TestDelegation(Base):
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -515,7 +380,7 @@ class TestDelegation(Base):
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -542,7 +407,7 @@ class TestDelegation(Base):
         for i in range(start_index, start_index + delegation_cnt + 1):
             origin_delegations.append((accounts[i], delegation_value))
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(False, tx_result['status'])
 
@@ -572,7 +437,7 @@ class TestDelegation(Base):
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result = self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
@@ -601,7 +466,7 @@ class TestDelegation(Base):
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -611,7 +476,7 @@ class TestDelegation(Base):
         for account in accounts:
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -622,7 +487,7 @@ class TestDelegation(Base):
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -630,7 +495,7 @@ class TestDelegation(Base):
         # get stake
         for account in accounts:
             response: dict = self.get_stake(account)
-            expected_result = {
+            expected_result: dict = {
                 "stake": hex(stake_value)
             }
             self.assertEqual(expected_result, response)
@@ -651,7 +516,7 @@ class TestDelegation(Base):
                 origin_delegations.append((accounts[j], delegation_value))
             tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[i], origin_delegations)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(1, tx_result['status'])
@@ -670,7 +535,7 @@ class TestDelegation(Base):
             expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations)
             expected_voting_power: int = stake_value - expected_total_delegation_value
             response: dict = self.get_delegation(accounts[i])
-            expected_result = {
+            expected_result: dict = {
                 "delegations": expected_delegations,
                 "totalDelegated": hex(expected_total_delegation_value),
                 "votingPower": hex(expected_voting_power)
@@ -680,8 +545,8 @@ class TestDelegation(Base):
         # get prep
         for i, account in enumerate(accounts):
             response: dict = self.get_prep(account)
-            delegation = response["delegation"]
-            expected_result = {
+            delegation: dict = response["delegation"]
+            expected_result: dict = {
                 "stake": hex(stake_value),
                 "delegated": hex(expected_delegation_values[i])
             }
@@ -693,7 +558,7 @@ class TestDelegation(Base):
             origin_delegations: List[Tuple['KeyWallet', int]] = []
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations)
             tx_list.append(tx)
-        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(1, tx_result['status'])
@@ -701,7 +566,7 @@ class TestDelegation(Base):
         # get delegate
         for i, account in enumerate(accounts):
             response: dict = self.get_delegation(account)
-            expected_result = {
+            expected_result: dict = {
                 "delegations": [],
                 "totalDelegated": hex(0),
                 "votingPower": hex(stake_value)
@@ -711,7 +576,7 @@ class TestDelegation(Base):
         # get prep
         for i, account in enumerate(accounts):
             response: dict = self.get_prep(account)
-            delegation = response["delegation"]
+            delegation: dict = response["delegation"]
             expected_result = {
                 "stake": hex(stake_value),
                 "delegated": hex(0)
