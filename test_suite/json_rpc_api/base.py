@@ -319,7 +319,7 @@ class Base(IconIntegrateTestBase):
         return response
 
     def get_balance(self,
-                    key_wallet: 'KeyWallet') -> dict:
+                    key_wallet: 'KeyWallet') -> int:
         return self.icon_service.get_balance(key_wallet.get_address())
 
     def query_iscore(self,
