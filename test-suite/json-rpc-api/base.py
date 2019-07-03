@@ -8,6 +8,7 @@ from iconsdk.libs.in_memory_zip import gen_deploy_data_content
 from iconsdk.providers.http_provider import HTTPProvider
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
+from iconservice.base.address import Address
 from iconservice.base.type_converter_templates import ConstantKeys
 from tbears.libs.icon_integrate_test import IconIntegrateTestBase, SCORE_INSTALL_ADDRESS
 
@@ -22,7 +23,6 @@ SCORE_PROJECT = os.path.abspath(os.path.join(DIR_PATH, '../'))
 
 
 class Base(IconIntegrateTestBase):
-    SYSTEM_ADDRESS = f"cx{'0'*40}"
 
     def setUp(self):
         super().setUp(block_confirm_interval=1, network_only=True)
@@ -31,6 +31,30 @@ class Base(IconIntegrateTestBase):
         self.icon_service = IconService(HTTPProvider(TEST_HTTP_ENDPOINT_URI_V3))
 
     # ================= Tool =================
+    def _get_block_height(self) -> int:
+        block_height: int = 0
+        if self.icon_service:
+            block = self.icon_service.get_block("latest")
+            block_height = block['height']
+        return block_height
+
+    def _make_blocks(self, to: int):
+        block_height = self._get_block_height()
+
+        while to > block_height:
+            self.process_message_tx(self.icon_service, "test message")
+            block_height += 1
+
+    def _make_blocks_to_next_calculation(self) -> int:
+        iiss_info = self.get_iiss_info()
+        next_calculation = int(iiss_info.get('nextCalculation', 0), 16)
+
+        self._make_blocks(to=next_calculation)
+
+        self.assertEqual(self._get_block_height(), next_calculation)
+
+        return next_calculation
+
     @staticmethod
     def create_deploy_score_tx(score_path: str, from_: 'KeyWallet',
                                to: str = SCORE_INSTALL_ADDRESS) -> 'SignedTransaction':
@@ -65,15 +89,15 @@ class Base(IconIntegrateTestBase):
         signed_transaction = SignedTransaction(transaction, from_)
         return signed_transaction
 
-    def create_transfer_icx_tx(self,
-                               from_: 'KeyWallet',
+    @staticmethod
+    def create_transfer_icx_tx(from_: 'KeyWallet',
                                to_: 'KeyWallet',
                                value: int,
                                step_limit: int = DEFAULT_STEP_LIMIT,
                                nid: int = DEFAULT_NID,
                                nonce: int = 0) -> 'SignedTransaction':
         transaction = TransactionBuilder() \
-            .from_(from_) \
+            .from_(from_.get_address()) \
             .to(to_) \
             .value(value) \
             .step_limit(step_limit) \
@@ -82,18 +106,18 @@ class Base(IconIntegrateTestBase):
             .build()
 
         # Returns the signed transaction object having a signature
-        signed_transaction = SignedTransaction(transaction, self._test1)
+        signed_transaction = SignedTransaction(transaction, from_)
         return signed_transaction
 
-    def create_register_prep_tx(self,
-                                key_wallet: 'KeyWallet',
+    @staticmethod
+    def create_register_prep_tx(key_wallet: 'KeyWallet',
                                 reg_data: Dict[str, Union[str, bytes]] = None,
                                 value: int = 0,
                                 step_limit: int = DEFAULT_STEP_LIMIT,
                                 nid: int = DEFAULT_NID,
                                 nonce: int = 0) -> 'SignedTransaction':
         if not reg_data:
-            reg_data = self._create_register_prep_params(key_wallet)
+            reg_data = Base._create_register_prep_params(key_wallet)
 
         transaction = CallTransactionBuilder(). \
             from_(key_wallet.get_address()). \
@@ -182,14 +206,14 @@ class Base(IconIntegrateTestBase):
 
         return signed_transaction
 
-    def create_set_delegation_tx(self,
-                                 key_wallet: KeyWallet,
-                                 delegations: List[Tuple['KeyWallet', int]],
+    @staticmethod
+    def create_set_delegation_tx(key_wallet: KeyWallet,
+                                 delegations: List[Tuple['Address', int]],
                                  value: int = 0,
                                  step_limit: int = DEFAULT_STEP_LIMIT,
                                  nid: int = DEFAULT_NID,
                                  nonce: int = 0) -> 'SignedTransaction':
-        delegations = self.create_delegation_params(delegations)
+        delegations = Base.create_delegation_params(delegations)
 
         transaction = CallTransactionBuilder(). \
             from_(key_wallet.get_address()). \
@@ -330,9 +354,9 @@ class Base(IconIntegrateTestBase):
             ConstantKeys.WEBSITE: f"https://node{name}.example.com",
             ConstantKeys.DETAILS: f"https://node{name}.example.com/details",
             ConstantKeys.P2P_END_POINT: f"https://node{name}.example.com:7100",
-            ConstantKeys.PUBLIC_KEY: name.encode()
+            ConstantKeys.PUBLIC_KEY: f"0x{key_wallet.bytes_public_key.hex()}"
         }
 
     @staticmethod
-    def create_delegation_params(params: List[Tuple['KeyWallet', int]]) -> List[Dict[[str, str]]]:
-        return [{"address": key_wallet.get_address(), "value": hex(value)} for (key_wallet, value) in params]
+    def create_delegation_params(params: List[Tuple['Address', int]]) -> List[Dict[str, str]]:
+        return [{"address": str(address), "value": hex(value)} for (address, value) in params]
