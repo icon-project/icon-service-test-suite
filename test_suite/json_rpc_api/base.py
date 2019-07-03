@@ -357,4 +357,6 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_delegation_params(params: List[Tuple['KeyWallet', int]]) -> List[Dict[str, str]]:
-        return [{"address": key_wallet.get_address(), "value": hex(value)} for (key_wallet, value) in params]
+        return [{"address": key_wallet.get_address(), "value": hex(value)}
+                for (key_wallet, value) in params
+                if value > 0]
