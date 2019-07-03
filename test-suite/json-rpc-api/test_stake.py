@@ -5,9 +5,9 @@ from iconsdk.builder.transaction_builder import TransactionBuilder
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
 from iconservice.icon_config import default_icon_config
-from iconservice.icon_constant import ConfigKey, REV_IISS
+from iconservice.icon_constant import ConfigKey
 
-from .base import Base, SCORE_PROJECT, GOVERNANCE_ADDRESS
+from .base import Base
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -21,14 +21,6 @@ class TestScoreTest(Base):
 
     def setUp(self):
         super().setUp()
-
-        # deploy governance SCORE
-        for score in GOVERNANCE_SCORES:
-            score_path = os.path.abspath(os.path.join(SCORE_PROJECT, f'./data/{score}.zip'))
-            self.create_deploy_score_tx(score_path, self._test1, GOVERNANCE_ADDRESS)
-
-        # set revision
-        self.create_set_revision_tx(self._test1, REV_IISS)
 
         self.accounts: list = []
         init_balance: int = 100
