@@ -75,7 +75,7 @@ class Base(IconIntegrateTestBase):
     @staticmethod
     def create_set_revision_tx(from_: 'KeyWallet', revision: int) -> 'SignedTransaction':
         # set revision
-        transaction = TransactionBuilder() \
+        transaction = CallTransactionBuilder() \
             .from_(from_.get_address()) \
             .to(GOVERNANCE_ADDRESS) \
             .step_limit(10_000_000) \
