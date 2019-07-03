@@ -8,7 +8,6 @@ from iconsdk.libs.in_memory_zip import gen_deploy_data_content
 from iconsdk.providers.http_provider import HTTPProvider
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
-from iconservice.base.address import Address
 from iconservice.base.type_converter_templates import ConstantKeys
 from tbears.libs.icon_integrate_test import IconIntegrateTestBase, SCORE_INSTALL_ADDRESS
 
@@ -208,7 +207,7 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_set_delegation_tx(key_wallet: KeyWallet,
-                                 delegations: List[Tuple['Address', int]],
+                                 delegations: List[Tuple['KeyWallet', int]],
                                  value: int = 0,
                                  step_limit: int = DEFAULT_STEP_LIMIT,
                                  nid: int = DEFAULT_NID,
@@ -358,5 +357,5 @@ class Base(IconIntegrateTestBase):
         }
 
     @staticmethod
-    def create_delegation_params(params: List[Tuple['Address', int]]) -> List[Dict[str, str]]:
-        return [{"address": str(address), "value": hex(value)} for (address, value) in params]
+    def create_delegation_params(params: List[Tuple['KeyWallet', int]]) -> List[Dict[str, str]]:
+        return [{"address": key_wallet.get_address(), "value": hex(value)} for (key_wallet, value) in params]
