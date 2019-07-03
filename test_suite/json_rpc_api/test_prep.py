@@ -2,14 +2,10 @@ import os
 from typing import List
 
 from iconsdk.builder.transaction_builder import TransactionBuilder
-from iconsdk.icon_service import IconService
-from iconsdk.providers.http_provider import HTTPProvider
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
 
 from .base import Base
-
-DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 class TestPreVote(Base):
@@ -17,9 +13,6 @@ class TestPreVote(Base):
 
     def setUp(self):
         super().setUp()
-
-        # if you want to send request to network, uncomment next line and set self.TEST_HTTP_ENDPOINT_URI_V3
-        self.icon_service = IconService(HTTPProvider(self.TEST_HTTP_ENDPOINT_URI_V3))
 
     def _distribute_icx(self, addresses: List['KeyWallet']):
         tx_list = []
@@ -49,9 +42,11 @@ class TestPreVote(Base):
             "details": "detail",
             "publicKey": "0x1234"
         }
-        tx = self.create_register_prep_tx(account, params)
+        tx = self.create_register_prep_tx(account, params, step_limit=10000000)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 0)
+
+        response = self.get_prep(account)
 
     def test_2_register_one_prep_invalid_case2(self):
         account = KeyWallet.create()
@@ -65,7 +60,7 @@ class TestPreVote(Base):
             "details": "detail",
             "p2pEndPoint": "target://123.213.123.123:7100"
         }
-        tx = self.create_register_prep_tx(account, params)
+        tx = self.create_register_prep_tx(account, params, step_limit=10000000)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 0)
 
@@ -82,7 +77,7 @@ class TestPreVote(Base):
             "publicKey": "0x1234",
             "p2pEndPoint": "target://123.213.123.123:7100"
         }
-        tx = self.create_register_prep_tx(account, params)
+        tx = self.create_register_prep_tx(account, params, step_limit=10000000)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
 
@@ -94,7 +89,7 @@ class TestPreVote(Base):
             "details": "detail",
             "p2pEndPoint": "target://123.213.123.123:7100"
         }
-        tx = self.create_set_prep_tx(account, set_data=params)
+        tx = self.create_set_prep_tx(account, set_data=params, step_limit=10000000)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
 
@@ -107,7 +102,7 @@ class TestPreVote(Base):
             "details": "detail",
             "p2pEndPoint": "target://123.213.123.123:7100",
         }
-        tx = self.create_set_prep_tx(self._wallet_array[0], irep, params)
+        tx = self.create_set_prep_tx(self._wallet_array[0], irep, params, step_limit=10000000)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 0)
 
@@ -124,7 +119,7 @@ class TestPreVote(Base):
                 "publicKey": f"0x1234",
                 "p2pEndPoint": f"target://{i}.213.123.123:7100"
             }
-            tx = self.create_register_prep_tx(accounts[i], params)
+            tx = self.create_register_prep_tx(accounts[i], params, step_limit=10000000)
             tx_list.append(tx)
 
         tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
@@ -150,15 +145,15 @@ class TestPreVote(Base):
         delegate_info_list = []
         delegate_amount = [100 - i for i in range(100)]
         for index, key_wallet in enumerate(accounts):
-            delegate_info = (key_wallet.get_address(), 100-index)
+            delegate_info = (key_wallet, 100-index)
             delegate_info_list.append(delegate_info)
 
         delegate_tx_list = []
         for index, key_wallet in enumerate(delegators):
-            tx = self.create_set_delegation_tx(key_wallet, delegate_info_list[index*10:index*10+10])
+            tx = self.create_set_delegation_tx(key_wallet, delegate_info_list[index*10:index*10+10],
+                                               step_limit=10000000)
             delegate_tx_list.append(tx)
         tx_results = self.process_transaction_bulk(delegate_tx_list, self.icon_service)
 
         # check total Delegated 50 to 70
         response_50_to_70 = self.get_prep_list(50, 70)
-        self.assertEqual(response_50_to_70['totalDelegated'], hex(sum(delegate_amount[49:70])))

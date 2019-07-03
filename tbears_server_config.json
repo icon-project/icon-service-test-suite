@@ -547,5 +547,8 @@
     "blockConfirmInterval": 1,
     "blockConfirmEmpty": false,
     "blockGeneratorRotation": true,
-    "blockGenerateCountPerLeader": 10
+    "blockGenerateCountPerLeader": 10,
+    "iissUnstakeLockPeriod" : 10,
+    "iissCalculatePeriod": 10,
+    "termPeriod": 10
 }
