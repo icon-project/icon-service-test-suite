@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List, Tuple, Dict
 
 from iconsdk.wallet.wallet import KeyWallet
 
-from .base import Base
+from .base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
@@ -10,14 +10,14 @@ if TYPE_CHECKING:
 
 class TestDelegation(Base):
     def test_delegate3(self):
-        init_balance: int = 1000
+        init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 2
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 1
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account, init_balance)
             tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -29,7 +29,7 @@ class TestDelegation(Base):
         self.assertEqual(True, tx_result['status'])
 
         # set stake user0 ~ 1 100%
-        stake_value: int = 100
+        stake_value: int = 100 * ICX_FACTOR
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_result: dict = self.process_transaction(tx, self.icon_service)
@@ -105,14 +105,14 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate4(self):
-        init_balance: int = 1000
+        init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 2
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 1
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account, init_balance)
             tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -125,7 +125,7 @@ class TestDelegation(Base):
             self.assertEqual(True, tx_result['status'])
 
         # set stake user0 ~ 1 100%
-        stake_value: int = 100
+        stake_value: int = 100 * ICX_FACTOR
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_result: dict = self.process_transaction(tx, self.icon_service)
@@ -208,7 +208,7 @@ class TestDelegation(Base):
         # create user0 ~ 2
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account, init_balance)
             tx_result: dict = self.process_transaction(tx, self.icon_service)
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
@@ -292,7 +292,7 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate6(self):
-        init_balance: int = 1000
+        init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 40
         init_block_height: int = self._get_block_height()
 
@@ -300,7 +300,7 @@ class TestDelegation(Base):
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         tx_list: list = []
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account, init_balance)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
@@ -318,7 +318,7 @@ class TestDelegation(Base):
             self.assertEqual(True, tx_result['status'])
 
         # set stake user0 ~ 39 100%
-        stake_value: int = 100
+        stake_value: int = 100 * ICX_FACTOR
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
@@ -450,14 +450,14 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate7(self):
-        init_balance: int = 1000
+        init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 100
         init_block_height: int = self._get_block_height()
 
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
         tx_list: list = []
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, str(account.address), init_balance)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account, init_balance)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
@@ -475,7 +475,7 @@ class TestDelegation(Base):
             self.assertEqual(True, tx_result['status'])
 
         # set stake
-        stake_value: int = 100
+        stake_value: int = 100 * ICX_FACTOR
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)

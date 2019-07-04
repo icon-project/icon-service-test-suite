@@ -19,6 +19,8 @@ SYSTEM_ADDRESS = "cx0000000000000000000000000000000000000000"
 GOVERNANCE_ADDRESS = "cx0000000000000000000000000000000000000001"
 TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
 
+ICX_FACTOR = 10 ** 18
+
 
 class Base(IconIntegrateTestBase):
 
@@ -186,7 +188,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_set_stake_tx(key_wallet: KeyWallet,
+    def create_set_stake_tx(key_wallet: 'KeyWallet',
                             stake: int,
                             value: int = 0,
                             step_limit: int = DEFAULT_STEP_LIMIT,
@@ -209,7 +211,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_set_delegation_tx(key_wallet: KeyWallet,
+    def create_set_delegation_tx(key_wallet: 'KeyWallet',
                                  delegations: List[Tuple['KeyWallet', int]],
                                  value: int = 0,
                                  step_limit: int = DEFAULT_STEP_LIMIT,
@@ -367,7 +369,7 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def _create_register_prep_params(key_wallet: 'KeyWallet') -> Dict[str, Union[str, bytes]]:
-        name = f"node{key_wallet.get_address()[2:7]}"
+        name = f"node{key_wallet.get_address()}"
 
         return {
             ConstantKeys.NAME: name,

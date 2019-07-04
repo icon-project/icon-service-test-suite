@@ -25,4 +25,6 @@ class TestInit(Base):
             self.process_transaction(tx, self.icon_service)
 
         tx = self.create_set_revision_tx(self._test1, REV_IISS)
-        self.process_transaction(tx, self.icon_service)
+        tx_result: dict = self.process_transaction(tx, self.icon_service)
+        self.assertTrue('status' in tx_result)
+        self.assertEqual(True, tx_result['status'])
