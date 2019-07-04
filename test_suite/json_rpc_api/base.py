@@ -89,11 +89,15 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_transfer_icx_tx(from_: 'KeyWallet',
-                               to_: str,
+                               to_: Union['KeyWallet', str],
                                value: int,
                                step_limit: int = DEFAULT_STEP_LIMIT,
                                nid: int = DEFAULT_NID,
                                nonce: int = 0) -> 'SignedTransaction':
+
+        if isinstance(to_, KeyWallet):
+            to_ = to_.get_address()
+
         transaction = TransactionBuilder() \
             .from_(from_.get_address()) \
             .to(to_) \
@@ -155,7 +159,7 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_set_prep_tx(key_wallet: 'KeyWallet',
-                           irep: int=None,
+                           irep: int = None,
                            set_data: Dict[str, Union[str, bytes]] = None,
                            value: int = 0,
                            step_limit: int = DEFAULT_STEP_LIMIT,
@@ -285,50 +289,69 @@ class Base(IconIntegrateTestBase):
         return response
 
     def get_prep(self,
-                 key_wallet: 'KeyWallet') -> dict:
+                 prep: Union['KeyWallet', str]) -> dict:
+
+        if isinstance(prep, KeyWallet):
+            prep = prep.get_address()
 
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
             .method("getPRep") \
-            .params({"address": key_wallet.get_address()}) \
+            .params({"address": prep}) \
             .build()
         response = self.process_call(call, self.icon_service)
         return response
 
     def get_stake(self,
-                  key_wallet: 'KeyWallet') -> dict:
+                  address: Union['KeyWallet', str]) -> dict:
+
+        if isinstance(address, KeyWallet):
+            address = address.get_address()
+
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
             .method("getStake") \
-            .params({"address": key_wallet.get_address()}) \
+            .params({"address": address}) \
             .build()
         response = self.process_call(call, self.icon_service)
         return response
 
     def get_delegation(self,
-                       key_wallet: 'KeyWallet') -> dict:
+                       address: Union['KeyWallet', str]) -> dict:
+
+        if isinstance(address, KeyWallet):
+            address = address.get_address()
+
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
             .method("getDelegation") \
-            .params({"address": key_wallet.get_address()}) \
+            .params({"address": address}) \
             .build()
         response = self.process_call(call, self.icon_service)
         return response
 
     def get_balance(self,
-                    key_wallet: 'KeyWallet') -> dict:
-        return self.icon_service.get_balance(key_wallet.get_address())
+                    address: Union['KeyWallet', str]) -> dict:
+
+        if isinstance(address, KeyWallet):
+            address = address.get_address()
+
+        return self.icon_service.get_balance(address)
 
     def query_iscore(self,
-                     key_wallet: 'KeyWallet') -> dict:
+                     address: Union['KeyWallet', str]) -> dict:
+
+        if isinstance(address, KeyWallet):
+            address = address.get_address()
+
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
             .method("queryIScore") \
-            .params({"address": key_wallet.get_address()}) \
+            .params({"address": address}) \
             .build()
         response = self.process_call(call, self.icon_service)
         return response

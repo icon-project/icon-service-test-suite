@@ -60,7 +60,8 @@ class TestStake(Base):
         stake_value: int = 100
         half_of_stake_value: int = 100 // 2
         unstake_value: int = 0
-        unstake_lock_period = default_icon_config[ConfigKey.IISS_UNSTAKE_LOCK_PERIOD]
+        # unstake_lock_period = default_icon_config[ConfigKey.IISS_UNSTAKE_LOCK_PERIOD]
+        unstake_lock_period = 10
         account = self.accounts[0]
         init_balance = self.icon_service.get_balance(account.get_address())
         fee_list = []
@@ -144,7 +145,8 @@ class TestStake(Base):
         stake_value: int = 100
         part_of_stake_value: int = randrange(1, 100)
         unstake_value: int = stake_value - part_of_stake_value
-        unstake_lock_period = default_icon_config[ConfigKey.IISS_UNSTAKE_LOCK_PERIOD]
+        # unstake_lock_period = default_icon_config[ConfigKey.IISS_UNSTAKE_LOCK_PERIOD]
+        unstake_lock_period = 10
         init_balance_list = [self.icon_service.get_balance(account.get_address())
                              for account in self.accounts]
         fee_list = []

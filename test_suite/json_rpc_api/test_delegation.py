@@ -9,13 +9,6 @@ if TYPE_CHECKING:
 
 
 class TestDelegation(Base):
-    def _get_block_height(self) -> int:
-        block_height: int = 0
-        if self.icon_service:
-            block = self.icon_service.get_block("latest")
-            block_height = block['height']
-        return block_height
-
     def test_delegate3(self):
         init_balance: int = 1000
         init_account_count: int = 2
