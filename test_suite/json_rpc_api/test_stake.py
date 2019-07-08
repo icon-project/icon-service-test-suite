@@ -28,6 +28,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50%
         response: dict = self.get_stake(account)
@@ -47,6 +48,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 100%
         response: dict = self.get_stake(account)
@@ -67,6 +69,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50% again
         response: dict = self.get_stake(account)
@@ -84,6 +87,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 100% again
         response: dict = self.get_stake(account)
@@ -104,6 +108,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50% again
         response: dict = self.get_stake(account)
@@ -121,6 +126,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 150% again
         response: dict = self.get_stake(account)
@@ -136,6 +142,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50% again
         response: dict = self.get_stake(account)
@@ -153,6 +160,7 @@ class TestStake(Base):
         tx_result: dict = self.process_transaction(tx, self.icon_service)
         self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
+        init_balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 0% again
         response: dict = self.get_stake(account)
@@ -176,6 +184,7 @@ class TestStake(Base):
     def test_stake2(self):
         init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 100
+        user_balances = [init_balance] * init_account_count
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 1
@@ -196,9 +205,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50%
         for account in accounts:
@@ -209,9 +219,9 @@ class TestStake(Base):
             self.assertEqual(expected_result, response)
 
         # get balance
-        for account in accounts:
+        for i, account in enumerate(accounts):
             response: dict = self.get_balance(account)
-            expected_result: int = init_balance - stake_value
+            expected_result: int = user_balances[i] - stake_value
             self.assertEqual(expected_result, response)
 
         # set stake user0 100%
@@ -221,9 +231,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 100%
         for account in accounts:
@@ -234,9 +245,9 @@ class TestStake(Base):
             self.assertEqual(expected_result, response)
 
         # get balance
-        for account in accounts:
+        for i, account in enumerate(accounts):
             response: dict = self.get_balance(account)
-            expected_result: int = init_balance - stake_value
+            expected_result: int = user_balances[i] - stake_value
             self.assertEqual(expected_result, response)
 
         # set stake user0 50% again
@@ -247,9 +258,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50% again
         for account in accounts:
@@ -262,6 +274,12 @@ class TestStake(Base):
             self.assertEqual(expected_result['unstake'], response['unstake'])
             self.assertIn('unstakeBlockHeight', response)
 
+        # get balance
+        for i, account in enumerate(accounts):
+            response: dict = self.get_balance(account)
+            expected_result: int = user_balances[i] - prev_stake_value
+            self.assertEqual(expected_result, response)
+
         # set stake user0 100% again
         tx_list: list = []
         stake_value: int = 100 * ICX_FACTOR
@@ -269,9 +287,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 100% again
         for account in accounts:
@@ -282,9 +301,10 @@ class TestStake(Base):
             self.assertEqual(expected_result, response)
 
         # get balance
-        response: dict = self.get_balance(accounts[0])
-        expected_result: int = init_balance - stake_value
-        self.assertEqual(expected_result, response)
+        for i, account in enumerate(accounts):
+            response: dict = self.get_balance(account)
+            expected_result: int = user_balances[i] - stake_value
+            self.assertEqual(expected_result, response)
 
         # set stake user0 50% again
         tx_list: list = []
@@ -294,9 +314,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50% again
         for account in accounts:
@@ -309,6 +330,12 @@ class TestStake(Base):
             self.assertEqual(expected_result['unstake'], response['unstake'])
             self.assertIn('unstakeBlockHeight', response)
 
+        # get balance
+        for i, account in enumerate(accounts):
+            response: dict = self.get_balance(account)
+            expected_result: int = user_balances[i] - prev_stake_value
+            self.assertEqual(expected_result, response)
+
         # set stake user0 150% again
         tx_list: list = []
         stake_value: int = 150 * ICX_FACTOR
@@ -316,9 +343,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 150% again
         for account in accounts:
@@ -326,6 +354,12 @@ class TestStake(Base):
             expected_result: dict = {
                 "stake": hex(stake_value)
             }
+            self.assertEqual(expected_result, response)
+
+        # get balance
+        for i, account in enumerate(accounts):
+            response: dict = self.get_balance(account)
+            expected_result: int = user_balances[i] - stake_value
             self.assertEqual(expected_result, response)
 
         # set stake user0 50% again
@@ -336,9 +370,10 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 50% again
         for account in accounts:
@@ -351,6 +386,12 @@ class TestStake(Base):
             self.assertEqual(expected_result['unstake'], response['unstake'])
             self.assertIn('unstakeBlockHeight', response)
 
+        # get balance
+        for i, account in enumerate(accounts):
+            response: dict = self.get_balance(account)
+            expected_result: int = user_balances[i] - prev_stake_value
+            self.assertEqual(expected_result, response)
+
         # set stake user0 0% again
         tx_list: list = []
         stake_value: int = 0
@@ -358,11 +399,13 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+            user_balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # get stake user0 0% again
+        last_unstake_block_height: str = hex(0)
         for account in accounts:
             response: dict = self.get_stake(account)
             expected_result: dict = {
@@ -372,12 +415,14 @@ class TestStake(Base):
             self.assertEqual(expected_result['stake'], response['stake'])
             self.assertEqual(expected_result['unstake'], response['unstake'])
             self.assertIn('unstakeBlockHeight', response)
+            last_unstake_block_height = response['unstakeBlockHeight']
 
         prev_block: int = self._get_block_height()
-        expired_block_height: int = int(response['unstakeBlockHeight'], 16) - self._get_block_height()
+        expired_block_height: int = int(last_unstake_block_height, 16) - self._get_block_height()
         self._make_blocks(prev_block + expired_block_height + 1)
 
         # get balance
-        response: dict = self.get_balance(accounts[0])
-        expected_result: int = init_balance
-        self.assertEqual(expected_result, response)
+        for i, account in enumerate(accounts):
+            response: dict = self.get_balance(account)
+            expected_result: int = user_balances[i] - stake_value
+            self.assertEqual(expected_result, response)

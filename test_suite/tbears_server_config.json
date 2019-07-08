@@ -5,7 +5,7 @@
     "stateDbRootPath": "./.statedb",
     "log": {
         "logger": "tbears",
-        "level": "debug",
+        "level": "info",
         "filePath": "./tbears.log",
         "colorLog": true,
         "outputType": "file",
@@ -16,7 +16,7 @@
         }
     },
     "service": {
-        "fee": false,
+        "fee": true,
         "audit": false,
         "deployerWhiteList": false
     },
@@ -547,5 +547,8 @@
     "blockConfirmInterval": 1,
     "blockConfirmEmpty": false,
     "blockGeneratorRotation": true,
-    "blockGenerateCountPerLeader": 10
+    "blockGenerateCountPerLeader": 10,
+    "iissUnstakeLockPeriod" : 10,
+    "iissCalculatePeriod": 10,
+    "termPeriod": 10
 }
