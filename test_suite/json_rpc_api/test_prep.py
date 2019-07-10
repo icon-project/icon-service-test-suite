@@ -43,7 +43,7 @@ class TestPRep(Base):
         self.assertEqual(tx_result['status'], 0)
 
         response = self.get_prep(account)
-        self.assertTrue(response['message'].startswith('P-Rep not found: '))
+        self.assertTrue(response['message'].startswith('P-Rep not found'))
 
     def test_2_register_one_prep_invalid_case2(self):
         account = KeyWallet.create()
@@ -62,7 +62,7 @@ class TestPRep(Base):
         self.assertEqual(tx_result['status'], 0)
 
         response = self.get_prep(account)
-        self.assertTrue(response['message'].startswith('P-Rep not found: '))
+        self.assertTrue(response['message'].startswith('P-Rep not found'))
 
     def test_3_register_one_prep(self):
         account = KeyWallet.create()
