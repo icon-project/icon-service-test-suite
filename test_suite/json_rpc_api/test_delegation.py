@@ -201,7 +201,7 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate5(self):
-        init_balance: int = 1000
+        init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 3
         init_block_height: int = self._get_block_height()
 
