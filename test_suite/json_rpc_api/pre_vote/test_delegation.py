@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List, Tuple, Dict
 
 from iconsdk.wallet.wallet import KeyWallet
 
-from .base import Base, ICX_FACTOR
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
@@ -201,7 +201,8 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate5(self):
-        init_balance: int = 1000 * ICX_FACTOR
+        transactions_fee: int = ICX_FACTOR
+        init_balance: int = 1000 + transactions_fee
         init_account_count: int = 3
         init_block_height: int = self._get_block_height()
 

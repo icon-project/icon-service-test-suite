@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List, Tuple, Dict
 
 from iconsdk.wallet.wallet import KeyWallet
 
-from .base import Base
+from test_suite.json_rpc_api.base import Base
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
@@ -39,7 +39,8 @@ class TestIScore(Base):
 
         tx_list: list = []
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value
+                                                                  + 10 ** 17)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
