@@ -376,7 +376,7 @@ class Base(IconIntegrateTestBase):
             ConstantKeys.EMAIL: f"node{name}@example.com",
             ConstantKeys.WEBSITE: f"https://node{name}.example.com",
             ConstantKeys.DETAILS: f"https://node{name}.example.com/details",
-            ConstantKeys.P2P_END_POINT: f"https://node{name}.example.com:7100",
+            ConstantKeys.P2P_ENDPOINT: f"node{name}.example.com:7100",
             ConstantKeys.PUBLIC_KEY: f"0x{key_wallet.bytes_public_key.hex()}"
         }
 
