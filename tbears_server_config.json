@@ -27,17 +27,17 @@
             {
                 "name": "genesis",
                 "address": "hx0000000000000000000000000000000000000000",
-                "balance": "0x2961fff8ca4a62327800000"
+                "balance": "0x0"
             },
             {
                 "name": "fee_treasury",
                 "address": "hx1000000000000000000000000000000000000000",
-                "balance": "0x2961fff8ca4a62327800000"
+                "balance": "0x0"
             },
             {
                 "name": "test1",
                 "address": "hxe7af5fcfd8dfc67530a01a0e403882687528dfcb",
-                "balance": "0x2961fff8ca4a62327800000"
+                "balance": "0x17499b4245363e0546800000"
             },
             {
                 "name": "test_wallet0",

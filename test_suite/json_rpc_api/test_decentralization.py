@@ -1,8 +1,7 @@
 from typing import List, Dict, Tuple, TYPE_CHECKING
 
 from iconsdk.signed_transaction import SignedTransaction
-from iconservice.base.type_converter_templates import ConstantKeys
-from iconservice.icon_constant import REV_DECENTRALIZATION
+from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
 
 from .base import Base
 
@@ -18,78 +17,99 @@ class TestDecentralization(Base):
         return [{"address": key_wallet.get_address(), "delegated": hex(value)}
                 for (key_wallet, value) in params]
 
-    def test_decentralization(self):
-        name: int = 0
-        params = {
-            ConstantKeys.NAME: f"{name}",
-            ConstantKeys.EMAIL: f"node{name}@example.com",
-            ConstantKeys.WEBSITE: f"https://node{name}.example.com",
-            ConstantKeys.DETAILS: f"https://node{name}.example.com/details",
-            ConstantKeys.P2P_END_POINT: f"https://node{name}.example.com:7100",
-            ConstantKeys.PUBLIC_KEY: f"0x{self._wallet_array[name].bytes_public_key.hex()}"
-        }
-        tx = self.create_register_prep_tx(self._wallet_array[name], params, step_limit=10000000)
-        tx_result = self.process_transaction(tx, self.icon_service)
-        self.assertEqual(True, tx_result['status'])
+    def test_func(self):
+        total_supply: int = self.icon_service.get_total_supply()
+        base_balance: int = self.get_balance(self._wallet_array[0])
+        # Minimum_delegate_amount is 0.02 * total_supply
+        # In this test delegate 0.03*total_supply because `Issue transaction` exists since REV_IISS
+        minimum_delegate_amount_for_decentralization: int = total_supply * 2 // 1000 + 1
+        init_balance: int = minimum_delegate_amount_for_decentralization * 10
 
-        balance: int = 100
-        origin_delegator: List[Tuple['KeyWallet', int]] = [(self._wallet_array[name], balance)]
-
+        # distribute icx PREP_MAIN_PREPS ~ PREP_MAIN_PREPS + PREP_MAIN_PREPS - 1
         tx_list: list = []
-        tx: 'SignedTransaction' = self.create_set_stake_tx(self._wallet_array[name], balance)
-        tx_list.append(tx)
-        tx: 'SignedTransaction' = self.create_set_delegation_tx(self._wallet_array[name],
-                                                                origin_delegator)
-        tx_list.append(tx)
+        for i in range(PREP_MAIN_PREPS):
+            tx: dict = self.create_transfer_icx_tx(self._test1,
+                                                   self._wallet_array[PREP_MAIN_PREPS + i],
+                                                   init_balance)
+            tx_list.append(tx)
         tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
-        response: dict = self.get_main_prep_list()
-        expected: dict = {
-            'totalDelegated': hex(0),
-            'preps': []
-        }
-        self.assertEqual(expected, response)
+        # stake PREP_MAIN_PREPS ~ PREP_MAIN_PREPS + PREP_MAIN_PREPS - 1
+        stake_amount: int = minimum_delegate_amount_for_decentralization
+        tx_list: list = []
+        for i in range(PREP_MAIN_PREPS):
+            tx: dict = self.create_set_stake_tx(self._wallet_array[PREP_MAIN_PREPS + i],
+                                                stake_amount)
+            tx_list.append(tx)
+        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        for tx_result in tx_results:
+            self.assertTrue('status' in tx_result)
+            self.assertEqual(True, tx_result['status'])
 
+        # register PRep
+        tx_list: list = []
+        for address in self._wallet_array[:PREP_MAIN_PREPS]:
+            tx: dict = self.create_register_prep_tx(address)
+            tx_list.append(tx)
+        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        for tx_result in tx_results:
+            self.assertTrue('status' in tx_result)
+            self.assertEqual(True, tx_result['status'])
+
+        # delegate to PRep
+        tx_list: list = []
+        for i in range(PREP_MAIN_PREPS):
+            tx: dict = self.create_set_delegation_tx(self._wallet_array[PREP_MAIN_PREPS + i],
+                                                     [
+                                                         (
+                                                             self._wallet_array[i],
+                                                             minimum_delegate_amount_for_decentralization
+                                                         )
+                                                     ])
+            tx_list.append(tx)
+        tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
+        for tx_result in tx_results:
+            self.assertTrue('status' in tx_result)
+            self.assertEqual(True, tx_result['status'])
+
+        # get main prep
+        response: dict = self.get_main_prep_list()
+        expected_response: dict = {
+            "preps": [],
+            "totalDelegated": hex(0)
+        }
+        self.assertEqual(expected_response, response)
+
+        # set Revision REV_IISS (decentralization)
         tx: 'SignedTransaction' = self.create_set_revision_tx(self._test1, REV_DECENTRALIZATION)
         tx_result: dict = self.process_transaction(tx, self.icon_service)
+        self.assertTrue('status' in tx_result)
         self.assertEqual(True, tx_result['status'])
 
-        expected_prep: List[Dict[str, str]] = self.create_prep_params(origin_delegator)
+        # get main prep
         response: dict = self.get_main_prep_list()
-        expected: dict = {
-            'totalDelegated': hex(balance),
-            'preps': expected_prep
+        expected_preps: list = []
+        expected_total_delegated: int = 0
+        for wallet in self._wallet_array[:PREP_MAIN_PREPS]:
+            expected_preps.append({
+                'address': wallet.get_address(),
+                'delegated': hex(minimum_delegate_amount_for_decentralization)
+            })
+            expected_total_delegated += minimum_delegate_amount_for_decentralization
+        expected_response: dict = {
+            "preps": expected_preps,
+            "totalDelegated": hex(expected_total_delegated)
         }
-        self.assertEqual(expected, response)
-        print(response)
+        self.assertEqual(expected_response, response)
 
-        # reg prep1
-        name: int = 1
-        params = {
-            ConstantKeys.NAME: f"{name}",
-            ConstantKeys.EMAIL: f"node{name}@example.com",
-            ConstantKeys.WEBSITE: f"https://node{name}.example.com",
-            ConstantKeys.DETAILS: f"https://node{name}.example.com/details",
-            ConstantKeys.P2P_END_POINT: f"https://node{name}.example.com:7100",
-            ConstantKeys.PUBLIC_KEY: f"0x{self._wallet_array[name].bytes_public_key.hex()}"
-        }
-        tx = self.create_register_prep_tx(self._wallet_array[name], params, step_limit=10000000)
-        tx_result = self.process_transaction(tx, self.icon_service)
-        self.assertEqual(True, tx_result['status'])
-
-        # set stake and delegate prep1
-        balance: int = 200
-        origin_delegator: List[Tuple['KeyWallet', int]] = [(self._wallet_array[name], balance)]
-
+        # delegate to PRep 0
         tx_list: list = []
-        tx: 'SignedTransaction' = self.create_set_stake_tx(self._wallet_array[name], balance)
-        tx_list.append(tx)
-        tx: 'SignedTransaction' = self.create_set_delegation_tx(self._wallet_array[name],
-                                                                origin_delegator)
-        tx_list.append(tx)
+        for i in range(PREP_MAIN_PREPS):
+            tx: dict = self.create_set_delegation_tx(self._wallet_array[PREP_MAIN_PREPS + i], [])
+            tx_list.append(tx)
         tx_results = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
@@ -97,11 +117,16 @@ class TestDecentralization(Base):
 
         self._make_blocks_to_next_calculation()
 
-        expected_prep: List[Dict[str, str]] = self.create_prep_params(origin_delegator)
+        # get main prep
         response: dict = self.get_main_prep_list()
-        expected: dict = {
-            'totalDelegated': hex(balance),
-            'preps': expected_prep
+        expected_preps: list = []
+        for wallet in self._wallet_array[:PREP_MAIN_PREPS]:
+            expected_preps.append({
+                'address': wallet.get_address(),
+                'delegated': hex(0)
+            })
+        expected_response: dict = {
+            "preps": expected_preps,
+            "totalDelegated": hex(0)
         }
-        self.assertEqual(expected, response)
-        print(response)
+        self.assertEqual(expected_response, response)
