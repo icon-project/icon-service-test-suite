@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List, Tuple, Dict
 
 from iconsdk.wallet.wallet import KeyWallet
 
-from test_suite.json_rpc_api.base import Base, ICX_FACTOR
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class TestDelegation(Base):
     def test_delegate3(self):
-        init_balance: int = 1000 * ICX_FACTOR
+        init_balance: int = (PREP_REGISTER_COST_ICX+101) * ICX_FACTOR
         init_account_count: int = 2
         init_block_height: int = self._get_block_height()
 
@@ -105,9 +105,9 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate4(self):
-        init_balance: int = 1000 * ICX_FACTOR
         init_account_count: int = 2
         init_block_height: int = self._get_block_height()
+        init_balance: int = (PREP_REGISTER_COST_ICX+101) * ICX_FACTOR
 
         # create user0 ~ 1
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
@@ -202,7 +202,7 @@ class TestDelegation(Base):
 
     def test_delegate5(self):
         transactions_fee: int = ICX_FACTOR
-        init_balance: int = 1000 + transactions_fee
+        init_balance: int = (PREP_REGISTER_COST_ICX+101) * ICX_FACTOR
         init_account_count: int = 3
         init_block_height: int = self._get_block_height()
 
@@ -293,7 +293,7 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate6(self):
-        init_balance: int = 1000 * ICX_FACTOR
+        init_balance: int = (PREP_REGISTER_COST_ICX + 101) * ICX_FACTOR
         init_account_count: int = 40
         init_block_height: int = self._get_block_height()
 
@@ -451,7 +451,7 @@ class TestDelegation(Base):
         self.assertEqual(expected_result, response)
 
     def test_delegate7(self):
-        init_balance: int = 1000 * ICX_FACTOR
+        init_balance: int = (PREP_REGISTER_COST_ICX + 101) * ICX_FACTOR
         init_account_count: int = 100
         init_block_height: int = self._get_block_height()
 

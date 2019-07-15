@@ -14,7 +14,7 @@ do
 done
 
 tbears stop
-if [ ${flag} -eq 1 ];then
+if [[ ${flag} -eq 1 ]];then
     tbears clear
 fi
 tbears start

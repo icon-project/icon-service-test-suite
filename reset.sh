@@ -3,5 +3,5 @@
 tbears stop
 tbears clear
 
-mv .score2 .score
-mv .statedb2 .statedb
+cp -r .score2/ .score/
+cp -r .statedb2/ .statedb/

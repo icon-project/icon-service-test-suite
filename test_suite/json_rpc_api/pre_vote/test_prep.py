@@ -4,7 +4,7 @@ from iconsdk.builder.transaction_builder import TransactionBuilder
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
 
-from test_suite.json_rpc_api.base import Base
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
 
 
 class TestPRep(Base):
@@ -14,7 +14,7 @@ class TestPRep(Base):
         tx_list = []
         for key_wallet in addresses:
             transaction = TransactionBuilder(). \
-                value(10**20). \
+                value((PREP_REGISTER_COST_ICX+1)*ICX_FACTOR). \
                 from_(self._test1.get_address()). \
                 to(key_wallet.get_address()). \
                 nid(3). \
@@ -28,7 +28,7 @@ class TestPRep(Base):
 
     def test_1_register_one_prep_invalid_case1(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), (PREP_REGISTER_COST_ICX+1)*ICX_FACTOR)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
@@ -47,7 +47,7 @@ class TestPRep(Base):
 
     def test_2_register_one_prep_invalid_case2(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), (PREP_REGISTER_COST_ICX+1)*ICX_FACTOR)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
@@ -66,7 +66,7 @@ class TestPRep(Base):
 
     def test_3_register_one_prep(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), (PREP_REGISTER_COST_ICX+1)*ICX_FACTOR)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
