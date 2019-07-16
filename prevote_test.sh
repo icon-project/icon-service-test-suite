@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
 
 help() {
-    echo " clear db if -c flag on "
+    echo "options"
+    echo "-r (flag) stop tbears server if this flag on"
+    echo "-c (flag) clear score, state db if this flag on"
     exit 0
 }
-flag=0
-while getopts "hc" opt
+clearFlag=0
+restartFlag=0
+while getopts "hcr" opt
 do
-    case $opt in
-        c) flag=1;;
+    case "$opt" in
+        c) clearFlag=1;;
+        r) restartFlag=1;;
         h) help ;;
     esac
 done
 
 tbears stop
-if [[ ${flag} -eq 1 ]];then
+
+if [[ ${clearFlag} -eq 1 ]];then
     tbears clear
 fi
 tbears start
@@ -26,3 +31,7 @@ tbears stop
 popd
 cp -r .score/ .score2/
 cp -r .statedb/ .statedb2/
+
+if [[ ${restartFlag} -eq 1 ]];then
+    tbears start
+fi
