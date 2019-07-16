@@ -9,7 +9,7 @@ from test_suite.json_rpc_api.base import Base
 ICX_FACTOR = 10 ** 18
 
 
-class TestDelegation(Base):
+class TestPRepScenario(Base):
     def test_scenario(self):
         self._wallet_array = [KeyWallet.create() for _ in range(212)]
         _PREPS = self._wallet_array[:200]
@@ -139,11 +139,10 @@ class TestDelegation(Base):
             delegate_tx_list.append(tx)
         self.process_transaction_bulk(delegate_tx_list, self.icon_service)
 
-        get_preps_response = self.get_prep_list()
-        preps_info = get_preps_response['preps']
         for index, account in enumerate(_PREPS[:len(_ICONIST)]):
-            self.assertEqual(preps_info[index]['address'], account.get_address())
-            self.assertEqual(int(preps_info[index]['delegated'], 16), 0)
+            prep_info = self.get_prep(account)
+            prep_delegation = prep_info['delegation']['delegated']
+            self.assertEqual(int(prep_delegation, 16), 0)
 
         # 11 multiple delegation
         print('start #11')
@@ -155,10 +154,10 @@ class TestDelegation(Base):
             delegate_tx_list.append(tx)
         delegate_tx_results = self.process_transaction_bulk(delegate_tx_list, self.icon_service)
 
-        get_preps_response = self.get_prep_list()
-        preps_info = get_preps_response['preps']
         for index, account in enumerate(reversed(_SUB_PREPS)):
-            self.assertEqual(int(preps_info[index]['delegated'], 16), delegate_info[len(_SUB_PREPS) - index - 1][1])
+            prep_info = self.get_prep(account)
+            prep_delegation = prep_info['delegation']['delegated']
+            self.assertEqual(int(prep_delegation, 16), delegate_info[len(_SUB_PREPS) - index - 1][1])
 
         # 12 11 delegation
         print('start #12')
@@ -196,9 +195,11 @@ class TestDelegation(Base):
         for i in range(10):
             tx = self.create_unregister_prep_tx(_PREPS[i])
             unregister_tx_list.append(tx)
-        self.process_transaction_bulk(unregister_tx_list, self.icon_service)
-        preps = self.get_prep_list()
-        self.assertEqual(len(preps['preps']), len(_PREPS) - 10)
+        tx_results = self.process_transaction_bulk(unregister_tx_list, self.icon_service)
+        for tx_result in tx_results:
+            self.assertEqual(tx_result['status'], 1)
+        # preps = self.get_prep_list()
+        # self.assertEqual(len(preps['preps']), len(_PREPS) - 10)
 
         # 16 get preps 0-9 (changed. error not raised)
         # print('start #16')

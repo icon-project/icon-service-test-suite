@@ -6,5 +6,5 @@ tbears start
 
 pytest test_suite/init_test.py
 
-cp -r .score/ .score2/
-cp -r .statedb/  .statedb2/
+cp -rf .score/ .score2/
+cp -rf .statedb/  .statedb2/
