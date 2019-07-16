@@ -107,7 +107,6 @@ class TestPRepScenario(Base):
         # 8-1 Add empty blocks
         print('start #8')
         self._make_blocks_to_next_calculation()
-        self._make_blocks_to_next_calculation()
 
         # 8-2 check I-Scores
         for account in self._wallet_array:

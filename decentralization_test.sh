@@ -44,7 +44,7 @@ if [[ ${decentralizationTestFlag} -eq 1 ]];then
         pytest test_suite/json_rpc_api/decentralized/test_decentralization"$n".py
         if [[ ${allFlag} -eq 1 ]];then
             pushd test_suite/json_rpc_api
-            pytest --ignore=decentralized
+            pytest --ignore=decentralized --ignore=scenario
             popd
         fi
         tbears stop
