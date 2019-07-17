@@ -232,6 +232,8 @@ dist/
 
 .statedb
 .score
+.statedb2
+.score2
 
 .DS_Store
 .pytest_cache/

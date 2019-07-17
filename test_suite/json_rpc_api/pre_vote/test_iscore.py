@@ -1,25 +1,24 @@
 from typing import TYPE_CHECKING, List, Tuple, Dict
 
 from iconsdk.wallet.wallet import KeyWallet
+from iconservice.icon_constant import IISS_ANNUAL_BLOCK, ISCORE_EXCHANGE_RATE
+from iconservice.icx.issue.issue_formula import IssueFormula
 
-from test_suite.json_rpc_api.base import Base, PREP_REGISTER_COST_ICX
+from ..base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
 
+MIN_DELEGATION = 788_400
 min_rrep = 200
-min_delegation = 788400
-block_per_year = 15768000
-gv_divider = 10000
-iscore_multiplier = 1000
-reward_divider = block_per_year * gv_divider / iscore_multiplier
+gv_divider = 10_000
+reward_divider = IISS_ANNUAL_BLOCK * gv_divider // ISCORE_EXCHANGE_RATE
 
 
 class TestIScore(Base):
-    MIN_DELEGATION = 788_400
 
-    def _calculate_iscore(self, delegation: int, from_: int, to: int) -> int:
-        if delegation < min_delegation:
+    def _calculate_iscore(self, delegation: int, st: int, ed: int) -> int:
+        if delegation < MIN_DELEGATION:
             return 0
 
         iiss_info = self.get_iiss_info()
@@ -27,30 +26,25 @@ class TestIScore(Base):
         if rrep < min_rrep:
             return 0
 
+        new_rrep: int = IssueFormula.calculate_temporary_reward_prep(rrep)
         # iscore = delegation_amount * period * rrep / reward_divider
-        return int(delegation * rrep * (to - from_) / reward_divider)
+        return int(delegation * new_rrep * (ed - st) / reward_divider)
 
     def test_iscore(self):
-        stake_value: int = self.MIN_DELEGATION * 1000
-        delegation_value: int = self.MIN_DELEGATION * 100
-        register_cost: int = PREP_REGISTER_COST_ICX * 10 ** 18
+        init_balance: int = 3000 * ICX_FACTOR
+        stake_value: int = MIN_DELEGATION
         init_account_count: int = 2
 
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
 
         tx_list: list = []
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value
-                                                                  + 10 ** 17)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), init_balance)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
-
-        tx_result = self.process_transaction(self.create_transfer_icx_tx(self._test1, accounts[1], register_cost),
-                                             self.icon_service)
-        self.assertEqual(tx_result['status'], 1)
 
         # register P-Rep
         tx: 'SignedTransaction' = self.create_register_prep_tx(accounts[1])
@@ -72,6 +66,7 @@ class TestIScore(Base):
         self.assertEqual(expect_result, response)
 
         # delegate to P-Rep
+        delegation_value: int = stake_value
         origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
         tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
         tx_result: dict = self.process_transaction(tx, self.icon_service)
@@ -95,7 +90,7 @@ class TestIScore(Base):
         self.assertEqual(hex(0), response['iscore'])
 
         # increase block height to 1st calculation
-        calculate1_block_height: int = self._make_blocks_to_next_calculation()
+        calculate1_block_height: int = self._make_blocks_to_end_calculation()
         # calculate IScore with rrep at calculate1_block_height
         iscore1: int = self._calculate_iscore(delegation_value, delegation_block, calculate1_block_height)
 
@@ -104,7 +99,7 @@ class TestIScore(Base):
         self.assertEqual(hex(0), response['iscore'])
 
         # increase block height to 2nd calculation
-        calculate2_block_height: int = self._make_blocks_to_next_calculation()
+        calculate2_block_height: int = self._make_blocks_to_end_calculation()
         iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height)
 
         # queryIScore
@@ -113,7 +108,7 @@ class TestIScore(Base):
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
 
         # increase block height to 3rd calculation
-        calculate3_block_height: int = self._make_blocks_to_next_calculation()
+        calculate3_block_height: int = self._make_blocks_to_end_calculation()
         iscore3: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height)
 
         # queryIScore
@@ -134,7 +129,7 @@ class TestIScore(Base):
         self.assertEqual(hex(calculate2_block_height), response['blockHeight'])
 
         # increase block height to 4th calculation
-        self._make_blocks_to_next_calculation()
+        self._make_blocks_to_end_calculation()
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])

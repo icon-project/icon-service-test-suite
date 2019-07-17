@@ -46,15 +46,15 @@ class Base(IconIntegrateTestBase):
             self.process_message_tx(self.icon_service, "test message")
             block_height += 1
 
-    def _make_blocks_to_next_calculation(self) -> int:
+    def _make_blocks_to_end_calculation(self) -> int:
         iiss_info = self.get_iiss_info()
         next_calculation = int(iiss_info.get('nextCalculation', 0), 16)
 
-        self._make_blocks(to=next_calculation)
+        self._make_blocks(to=next_calculation - 1)
 
-        self.assertEqual(self._get_block_height(), next_calculation)
+        self.assertEqual(self._get_block_height(), next_calculation - 1)
 
-        return next_calculation
+        return next_calculation - 1
 
     @staticmethod
     def create_deploy_score_tx(score_path: str, from_: 'KeyWallet',

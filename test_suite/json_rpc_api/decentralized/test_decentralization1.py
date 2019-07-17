@@ -94,7 +94,7 @@ class TestDecentralization1(DecentralizationBase):
         #
         # unregister_tx_list = [self.create_unregister_prep_tx(prep) for prep in preps[:3]]
         # self.process_transaction_bulk(unregister_tx_list, self.icon_service)
-        # self._make_blocks_to_next_calculation()
+        # self._make_blocks_to_end_calculation()
         #
         # response = self.process_call(get_main_preps_request, self.icon_service)
         # prep_info_list = response['preps']

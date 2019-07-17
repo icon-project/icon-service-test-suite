@@ -106,7 +106,7 @@ class TestPRepScenario(Base):
 
         # 8-1 Add empty blocks
         print('start #8')
-        self._make_blocks_to_next_calculation()
+        self._make_blocks_to_end_calculation()
 
         # 8-2 check I-Scores
         for account in self._wallet_array:
@@ -246,7 +246,7 @@ class TestPRepScenario(Base):
             self.assertEqual(tx_result['status'], 0)
 
         # 20 query ICONist-9 i-score
-        self._make_blocks_to_next_calculation()
+        self._make_blocks_to_end_calculation()
         print('start #20')
         response = self.query_iscore(_ICONIST[9])
         iscore1 = response['iscore']

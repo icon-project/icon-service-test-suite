@@ -110,7 +110,7 @@ class TestDecentralization(Base):
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
-        self._make_blocks_to_next_calculation()
+        self._make_blocks_to_end_calculation()
 
         # get main prep
         response: dict = self.get_main_prep_list()
