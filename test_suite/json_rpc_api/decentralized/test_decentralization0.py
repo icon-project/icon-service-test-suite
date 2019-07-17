@@ -3,7 +3,7 @@ from typing import List, Dict, Tuple, TYPE_CHECKING
 from iconsdk.signed_transaction import SignedTransaction
 from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
 
-from .base import Base
+from test_suite.json_rpc_api.base import Base
 
 if TYPE_CHECKING:
     from iconsdk.wallet.wallet import KeyWallet
@@ -11,11 +11,6 @@ if TYPE_CHECKING:
 
 class TestDecentralization(Base):
     TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
-
-    @staticmethod
-    def create_prep_params(params: List[Tuple['KeyWallet', int]]) -> List[Dict[str, str]]:
-        return [{"address": key_wallet.get_address(), "delegated": hex(value)}
-                for (key_wallet, value) in params]
 
     def test_func(self):
         total_supply: int = self.icon_service.get_total_supply()

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List, Tuple, Dict
 
 from iconsdk.wallet.wallet import KeyWallet
 
-from .base import Base
+from test_suite.json_rpc_api.base import Base, PREP_REGISTER_COST_ICX
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
@@ -33,18 +33,24 @@ class TestIScore(Base):
     def test_iscore(self):
         stake_value: int = self.MIN_DELEGATION * 1000
         delegation_value: int = self.MIN_DELEGATION * 100
+        register_cost: int = PREP_REGISTER_COST_ICX * 10 ** 18
         init_account_count: int = 2
 
         accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
 
         tx_list: list = []
         for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value)
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), stake_value
+                                                                  + 10 ** 17)
             tx_list.append(tx)
         tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
         for tx_result in tx_results:
             self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
+
+        tx_result = self.process_transaction(self.create_transfer_icx_tx(self._test1, accounts[1], register_cost),
+                                             self.icon_service)
+        self.assertEqual(tx_result['status'], 1)
 
         # register P-Rep
         tx: 'SignedTransaction' = self.create_register_prep_tx(accounts[1])

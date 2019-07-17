@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List
 
 from iconsdk.wallet.wallet import KeyWallet
 
-from .base import Base, ICX_FACTOR
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction

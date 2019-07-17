@@ -4,15 +4,14 @@ from iconsdk.wallet.wallet import KeyWallet
 from iconservice.base.type_converter_templates import ConstantKeys
 from iconservice.icon_constant import REV_IISS
 
-from .base import Base
+from test_suite.json_rpc_api.base import Base
 
 ICX_FACTOR = 10 ** 18
 
 
-class TestDelegation(Base):
+class TestPRepScenario(Base):
     def test_scenario(self):
-        self._wallet_array.append(KeyWallet.create())
-        self._wallet_array.append(KeyWallet.create())
+        self._wallet_array = [KeyWallet.create() for _ in range(212)]
         _PREPS = self._wallet_array[:200]
         _SUB_PREPS = self._wallet_array[:100]
         _ICONIST = self._wallet_array[202:]
@@ -68,7 +67,7 @@ class TestDelegation(Base):
                 ConstantKeys.EMAIL: f"prep{name}@example.com",
                 ConstantKeys.WEBSITE: f"https://prep{name}.example.com",
                 ConstantKeys.DETAILS: f"https://prep{name}.example.com/details",
-                ConstantKeys.P2P_END_POINT: f"https://prep{name}.example.com:7100"
+                ConstantKeys.P2P_ENDPOINT: f"prep{name}.example.com:7100"
             }
             expected_prep_data.append(set_prep_data)
             tx = self.create_set_prep_tx(account, set_data=set_prep_data)
@@ -84,8 +83,8 @@ class TestDelegation(Base):
             self.assertEqual(expected_prep_data[index][ConstantKeys.EMAIL], prep_info[ConstantKeys.EMAIL])
             self.assertEqual(expected_prep_data[index][ConstantKeys.WEBSITE], prep_info[ConstantKeys.WEBSITE])
             self.assertEqual(expected_prep_data[index][ConstantKeys.DETAILS], prep_info[ConstantKeys.DETAILS])
-            self.assertEqual(expected_prep_data[index][ConstantKeys.P2P_END_POINT],
-                             prep_info[ConstantKeys.P2P_END_POINT])
+            self.assertEqual(expected_prep_data[index][ConstantKeys.P2P_ENDPOINT],
+                             prep_info[ConstantKeys.P2P_ENDPOINT])
 
         # 7-1 ICONist stake 100ICX
         print('start #7')
@@ -107,7 +106,6 @@ class TestDelegation(Base):
 
         # 8-1 Add empty blocks
         print('start #8')
-        self._make_blocks_to_next_calculation()
         self._make_blocks_to_next_calculation()
 
         # 8-2 check I-Scores
@@ -140,11 +138,10 @@ class TestDelegation(Base):
             delegate_tx_list.append(tx)
         self.process_transaction_bulk(delegate_tx_list, self.icon_service)
 
-        get_preps_response = self.get_prep_list()
-        preps_info = get_preps_response['preps']
         for index, account in enumerate(_PREPS[:len(_ICONIST)]):
-            self.assertEqual(preps_info[index]['address'], account.get_address())
-            self.assertEqual(int(preps_info[index]['delegated'], 16), 0)
+            prep_info = self.get_prep(account)
+            prep_delegation = prep_info['delegation']['delegated']
+            self.assertEqual(int(prep_delegation, 16), 0)
 
         # 11 multiple delegation
         print('start #11')
@@ -156,10 +153,10 @@ class TestDelegation(Base):
             delegate_tx_list.append(tx)
         delegate_tx_results = self.process_transaction_bulk(delegate_tx_list, self.icon_service)
 
-        get_preps_response = self.get_prep_list()
-        preps_info = get_preps_response['preps']
         for index, account in enumerate(reversed(_SUB_PREPS)):
-            self.assertEqual(int(preps_info[index]['delegated'], 16), delegate_info[len(_SUB_PREPS) - index - 1][1])
+            prep_info = self.get_prep(account)
+            prep_delegation = prep_info['delegation']['delegated']
+            self.assertEqual(int(prep_delegation, 16), delegate_info[len(_SUB_PREPS) - index - 1][1])
 
         # 12 11 delegation
         print('start #12')
@@ -197,15 +194,17 @@ class TestDelegation(Base):
         for i in range(10):
             tx = self.create_unregister_prep_tx(_PREPS[i])
             unregister_tx_list.append(tx)
-        self.process_transaction_bulk(unregister_tx_list, self.icon_service)
-        preps = self.get_prep_list()
-        self.assertEqual(len(preps['preps']), len(_PREPS) - 10)
+        tx_results = self.process_transaction_bulk(unregister_tx_list, self.icon_service)
+        for tx_result in tx_results:
+            self.assertEqual(tx_result['status'], 1)
+        # preps = self.get_prep_list()
+        # self.assertEqual(len(preps['preps']), len(_PREPS) - 10)
 
-        # 16 get preps 0-9
-        print('start #16')
-        for i in range(10):
-            response = self.get_prep(_PREPS[i])
-            self.assertTrue(response['message'].startswith('P-Rep not found: '))
+        # 16 get preps 0-9 (changed. error not raised)
+        # print('start #16')
+        # for i in range(10):
+        #     response = self.get_prep(_PREPS[i])
+        #     self.assertTrue(response['message'].startswith('P-Rep not found: '))
 
         # 17 register 0-9 preps again
         print('start #17')
@@ -215,6 +214,7 @@ class TestDelegation(Base):
             register_tx_list.append(tx)
         register_tx_results = self.process_transaction_bulk(register_tx_list, self.icon_service)
         for tx_result in register_tx_results:
+            print(tx_result)
             self.assertEqual(tx_result['status'], 0)
 
         # 18 set prep 0-9 preps
@@ -227,7 +227,7 @@ class TestDelegation(Base):
                 ConstantKeys.EMAIL: f"node{name}@example.com",
                 ConstantKeys.WEBSITE: f"https://node{name}.example.com",
                 ConstantKeys.DETAILS: f"https://node{name}.example.com/details",
-                ConstantKeys.P2P_END_POINT: f"https://node{name}.example.com:7100"
+                ConstantKeys.P2P_ENDPOINT: f"node{name}.example.com:7100"
             }
             tx = self.create_set_prep_tx(account, set_data=set_prep_data)
             set_prep_tx_list.append(tx)

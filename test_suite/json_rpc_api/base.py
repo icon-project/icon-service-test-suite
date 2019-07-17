@@ -19,6 +19,7 @@ SYSTEM_ADDRESS = "cx0000000000000000000000000000000000000000"
 GOVERNANCE_ADDRESS = "cx0000000000000000000000000000000000000001"
 TEST_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
 
+PREP_REGISTER_COST_ICX = 2000
 ICX_FACTOR = 10 ** 18
 
 
@@ -116,7 +117,7 @@ class Base(IconIntegrateTestBase):
     @staticmethod
     def create_register_prep_tx(key_wallet: 'KeyWallet',
                                 reg_data: Dict[str, Union[str, bytes]] = None,
-                                value: int = 0,
+                                value: int = 2000 * ICX_FACTOR,
                                 step_limit: int = DEFAULT_STEP_LIMIT,
                                 nid: int = DEFAULT_NID,
                                 nonce: int = 0) -> 'SignedTransaction':

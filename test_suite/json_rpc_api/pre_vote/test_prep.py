@@ -4,7 +4,7 @@ from iconsdk.builder.transaction_builder import TransactionBuilder
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
 
-from .base import Base
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
 
 
 class TestPRep(Base):
@@ -14,7 +14,7 @@ class TestPRep(Base):
         tx_list = []
         for key_wallet in addresses:
             transaction = TransactionBuilder(). \
-                value(10**20). \
+                value((PREP_REGISTER_COST_ICX+1)*ICX_FACTOR). \
                 from_(self._test1.get_address()). \
                 to(key_wallet.get_address()). \
                 nid(3). \
@@ -28,15 +28,15 @@ class TestPRep(Base):
 
     def test_1_register_one_prep_invalid_case1(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), (PREP_REGISTER_COST_ICX+1)*ICX_FACTOR)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
             "name": "banana node",
             "email": "banana@banana.com",
             "website": "https://banana.com",
-            "details": "detail",
-            "publicKey": "0x1234"
+            "details": "http://banana.com/detail",
+            "publicKey": f"0x{account.bytes_public_key.hex()}"
         }
         tx = self.create_register_prep_tx(account, params, step_limit=10000000)
         tx_result = self.process_transaction(tx, self.icon_service)
@@ -47,15 +47,15 @@ class TestPRep(Base):
 
     def test_2_register_one_prep_invalid_case2(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), (PREP_REGISTER_COST_ICX+1)*ICX_FACTOR)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
             "name": "banana node",
             "email": "banana@banana.com",
             "website": "https://banana.com",
-            "details": "detail",
-            "p2pEndPoint": "target://123.213.123.123:7100"
+            "details": "http://banana.com/detail",
+            "p2pEndpoint": "123.213.123.123:7100"
         }
         tx = self.create_register_prep_tx(account, params)
         tx_result = self.process_transaction(tx, self.icon_service)
@@ -66,16 +66,16 @@ class TestPRep(Base):
 
     def test_3_register_one_prep(self):
         account = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), 10**18)
+        tx = self.create_transfer_icx_tx(self._test1, account.get_address(), (PREP_REGISTER_COST_ICX+1)*ICX_FACTOR)
         tx_result = self.process_transaction(tx, self.icon_service)
         self.assertEqual(tx_result['status'], 1)
         params = {
             "name": "banana node",
             "email": "banana@banana.com",
             "website": "https://banana.com",
-            "details": "detail",
-            "publicKey": "0x1234",
-            "p2pEndPoint": "target://123.213.123.123:7100"
+            "details": "http://banana.com/detail",
+            "publicKey": f"0x{account.bytes_public_key.hex()}",
+            "p2pEndpoint": "123.213.123.123:7100"
         }
         tx = self.create_register_prep_tx(account, params)
         tx_result = self.process_transaction(tx, self.icon_service)
@@ -86,8 +86,8 @@ class TestPRep(Base):
             "name": "apple node",
             "email": "apple@banana.com",
             "website": "https://apple.com",
-            "details": "detail",
-            "p2pEndPoint": "target://123.213.123.123:7100"
+            "details": "http://banana.com/detail",
+            "p2pEndpoint": "123.213.123.123:7100"
         }
         tx = self.create_set_prep_tx(account, set_data=params1)
         tx_result = self.process_transaction(tx, self.icon_service)
@@ -99,7 +99,7 @@ class TestPRep(Base):
         self.assertEqual(prep_data['email'], params1['email'])
         self.assertEqual(prep_data['website'], params1['website'])
         self.assertEqual(prep_data['details'], params1['details'])
-        self.assertEqual(prep_data['p2pEndPoint'], params1['p2pEndPoint'])
+        self.assertEqual(prep_data['p2pEndpoint'], params1['p2pEndpoint'])
 
         # set irep on pre-voting
         irep = 40000
@@ -107,8 +107,8 @@ class TestPRep(Base):
             "name": "apple node2",
             "email": "apple@banana.com",
             "website": "https://apple.com",
-            "details": "detail",
-            "p2pEndPoint": "target://123.213.123.123:7100",
+            "details": "http://banana.com/detail",
+            "p2pEndpoint": "123.213.123.123:7100",
         }
         tx = self.create_set_prep_tx(account, irep, params)
         tx_result = self.process_transaction(tx, self.icon_service)
@@ -120,7 +120,7 @@ class TestPRep(Base):
         self.assertEqual(prep_data['email'], params1['email'])
         self.assertEqual(prep_data['website'], params1['website'])
         self.assertEqual(prep_data['details'], params1['details'])
-        self.assertEqual(prep_data['p2pEndPoint'], params1['p2pEndPoint'])
+        self.assertEqual(prep_data['p2pEndpoint'], params1['p2pEndpoint'])
         self.assertNotEqual(prep_data['irep'], hex(irep))
 
     def test_4_register_100_preps_and_check_total_delegated(self):
@@ -128,14 +128,14 @@ class TestPRep(Base):
         tx_list = self._distribute_icx(accounts)
         self.process_transaction_bulk(tx_list, self.icon_service)
         tx_list = []
-        for i in range(100):
+        for i, account in enumerate(accounts):
             params = {
                 "name": f"banana node{i}",
                 "email": f"banana@banana{i}.com",
                 "website": f"https://banana{i}.com",
-                "details": f"detail{i}",
-                "publicKey": f"0x1234",
-                "p2pEndPoint": f"target://{i}.213.123.123:7100"
+                "details": f"http://banana.com/detail{i}",
+                "publicKey": f"0x{account.bytes_public_key.hex()}",
+                "p2pEndpoint": f"3.213.123.123:71{i}"
             }
             tx = self.create_register_prep_tx(accounts[i], params, step_limit=10000000)
             tx_list.append(tx)
@@ -175,4 +175,3 @@ class TestPRep(Base):
 
         # check total Delegated 50 to 70
         response_50_to_70 = self.get_prep_list(50, 70)
-        print(response_50_to_70)

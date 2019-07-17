@@ -1,5 +1,10 @@
+#!/usr/bin/env bash
+
 tbears stop
 tbears clear
-rm -rf tbears.log
-rm -rf tbears_exc.log
 tbears start
+
+pytest test_suite/init_test.py
+
+cp -rf .score/ .score2/
+cp -rf .statedb/  .statedb2/

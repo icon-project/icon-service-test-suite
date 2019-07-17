@@ -548,7 +548,10 @@
     "blockConfirmEmpty": false,
     "blockGeneratorRotation": true,
     "blockGenerateCountPerLeader": 10,
-    "iissUnstakeLockPeriod" : 10,
     "iissCalculatePeriod": 10,
-    "termPeriod": 10
+    "termPeriod": 10,
+    "iissMetaData": {
+        "lockMin": 10,
+        "lockMax": 10
+    }
 }
