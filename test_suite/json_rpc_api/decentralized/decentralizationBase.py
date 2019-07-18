@@ -10,21 +10,34 @@ if TYPE_CHECKING:
 
 class DecentralizationBase(Base):
 
-    def distribute_icx(self, key_wallet: 'KeyWallet', addresses: List['KeyWallet'], first_distribute_amount: int,
-                       increment: int=0):
-        distribute_tx_list = [self.create_transfer_icx_tx(key_wallet, wallet, first_distribute_amount + index*increment)
+    def distribute_icx(self,
+                       key_wallet: 'KeyWallet',
+                       addresses: List['KeyWallet'],
+                       first_distribute_amount: int,
+                       increment: int = 0):
+
+        distribute_tx_list = [self.create_transfer_icx_tx(key_wallet,
+                                                          wallet,
+                                                          first_distribute_amount + index * increment)
                               for index, wallet in enumerate(addresses)]
         tx_results = self.process_transaction_bulk(distribute_tx_list, self.icon_service)
         return tx_results
 
-    def stake_bulk(self, wallets: List['KeyWallet'], first_stake_amount: int,
-                   increment: int=0):
-        stake_tx_list = [self.create_set_stake_tx(wallet, first_stake_amount + index*increment)
+    def stake_bulk(self,
+                   wallets: List['KeyWallet'],
+                   first_stake_amount: int,
+                   increment: int = 0):
+        stake_tx_list = [self.create_set_stake_tx(wallet,
+                                                  first_stake_amount + index * increment)
                          for index, wallet in enumerate(wallets)]
         tx_results = self.process_transaction_bulk(stake_tx_list, self.icon_service)
         return tx_results
 
-    def delegate(self, key_wallet: 'KeyWallet', preps: List['KeyWallet'], first_delegate_amount: int, increment: int=0):
+    def delegate(self,
+                 key_wallet: 'KeyWallet',
+                 preps: List['KeyWallet'],
+                 first_delegate_amount: int,
+                 increment: int = 0):
         if first_delegate_amount == 0 and increment == 0:
             delegation_data = []
         else:

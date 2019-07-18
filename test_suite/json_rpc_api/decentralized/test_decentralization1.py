@@ -1,10 +1,9 @@
 import os
 
-from iconsdk.builder.call_builder import CallBuilder
 from iconsdk.wallet.wallet import KeyWallet
 from iconservice.icon_constant import REV_DECENTRALIZATION
 
-from test_suite.json_rpc_api.base import SYSTEM_ADDRESS, ICX_FACTOR
+from test_suite.json_rpc_api.base import ICX_FACTOR
 from test_suite.json_rpc_api.decentralized.decentralizationBase import DecentralizationBase
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))

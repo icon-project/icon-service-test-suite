@@ -33,33 +33,38 @@ class TestIScore(Base):
     def test_iscore(self):
         init_balance: int = 3000 * ICX_FACTOR
         stake_value: int = MIN_DELEGATION
-        init_account_count: int = 2
+        init_wallet_count: int = 2
+        balances: list = [init_balance] * init_wallet_count
 
-        accounts: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_account_count)]
+        wallets: List['KeyWallet'] = [KeyWallet.create() for _ in range(init_wallet_count)]
 
-        tx_list: list = []
-        for account in accounts:
-            tx: 'SignedTransaction' = self.create_transfer_icx_tx(self._test1, account.get_address(), init_balance)
-            tx_list.append(tx)
-        tx_results: list = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_list: list = self.distribute_icx(self._test1, wallets, init_balance)
+        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
-            self.assertTrue('status' in tx_result)
             self.assertEqual(True, tx_result['status'])
 
         # register P-Rep
-        tx: 'SignedTransaction' = self.create_register_prep_tx(accounts[1])
-        tx_result: dict = self.process_transaction(tx, self.icon_service)
-        self.assertTrue('status' in tx_result)
-        self.assertEqual(True, tx_result['status'])
+        tx: 'SignedTransaction' = self.create_register_prep_tx(wallets[1])
+        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
+            balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # setStake
-        tx: 'SignedTransaction' = self.create_set_stake_tx(accounts[0], stake_value)
-        tx_result: dict = self.process_transaction(tx, self.icon_service)
-        self.assertTrue('status' in tx_result)
-        self.assertEqual(True, tx_result['status'])
+        tx: 'SignedTransaction' = self.create_set_stake_tx(wallets[0], stake_value)
+        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
+            balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # getStake
-        response: dict = self.get_stake(accounts[0])
+        response: dict = self.get_stake(wallets[0])
         expect_result: dict = {
             "stake": hex(stake_value),
         }
@@ -67,17 +72,20 @@ class TestIScore(Base):
 
         # delegate to P-Rep
         delegation_value: int = stake_value
-        origin_delegations: List[Tuple['KeyWallet', int]] = [(accounts[1], delegation_value)]
-        tx: 'SignedTransaction' = self.create_set_delegation_tx(accounts[0], origin_delegations)
-        tx_result: dict = self.process_transaction(tx, self.icon_service)
-        self.assertTrue('status' in tx_result)
-        self.assertEqual(True, tx_result['status'])
+        origin_delegations: List[Tuple['KeyWallet', int]] = [(wallets[1], delegation_value)]
+        tx: 'SignedTransaction' = self.create_set_delegation_tx(wallets[0], origin_delegations)
+        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
+            balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-        delegation_block = tx_result['blockHeight']
+        delegation_block = tx_results[0]['blockHeight']
 
         # query delegation
         expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations)
-        response: dict = self.get_delegation(accounts[0])
+        response: dict = self.get_delegation(wallets[0])
         expect_result: dict = {
             "delegations": expected_delegations,
             "totalDelegated": hex(delegation_value),
@@ -86,7 +94,7 @@ class TestIScore(Base):
         self.assertEqual(expect_result, response)
 
         # queryIScore
-        response: dict = self.query_iscore(accounts[0])
+        response: dict = self.query_iscore(wallets[0])
         self.assertEqual(hex(0), response['iscore'])
 
         # increase block height to 1st calculation
@@ -95,7 +103,7 @@ class TestIScore(Base):
         iscore1: int = self._calculate_iscore(delegation_value, delegation_block, calculate1_block_height)
 
         # queryIScore
-        response: dict = self.query_iscore(accounts[0])
+        response: dict = self.query_iscore(wallets[0])
         self.assertEqual(hex(0), response['iscore'])
 
         # increase block height to 2nd calculation
@@ -103,7 +111,7 @@ class TestIScore(Base):
         iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height)
 
         # queryIScore
-        response: dict = self.query_iscore(accounts[0])
+        response: dict = self.query_iscore(wallets[0])
         self.assertEqual(hex(iscore1), response['iscore'])
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
 
@@ -112,18 +120,21 @@ class TestIScore(Base):
         iscore3: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height)
 
         # queryIScore
-        response: dict = self.query_iscore(accounts[0])
+        response: dict = self.query_iscore(wallets[0])
         self.assertEqual(hex(iscore1 + iscore2), response['iscore'])
         self.assertEqual(hex(calculate2_block_height), response['blockHeight'])
 
         # claimIScore
-        tx: 'SignedTransaction' = self.create_claim_iscore_tx(accounts[0])
-        tx_result: dict = self.process_transaction(tx, self.icon_service)
-        self.assertTrue('status' in tx_result)
-        self.assertEqual(True, tx_result['status'])
+        tx: 'SignedTransaction' = self.create_claim_iscore_tx(wallets[0])
+        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
+            balances[i] -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # queryIScore
-        response: dict = self.query_iscore(accounts[0])
+        response: dict = self.query_iscore(wallets[0])
         iscore_after_claim: int = (iscore1 + iscore2) % 1000
         self.assertEqual(hex(iscore_after_claim), response['iscore'])
         self.assertEqual(hex(calculate2_block_height), response['blockHeight'])
@@ -132,6 +143,6 @@ class TestIScore(Base):
         self._make_blocks_to_end_calculation()
 
         # queryIScore
-        response: dict = self.query_iscore(accounts[0])
+        response: dict = self.query_iscore(wallets[0])
         self.assertEqual(hex(iscore_after_claim + iscore3), response['iscore'])
         self.assertEqual(hex(calculate3_block_height), response['blockHeight'])

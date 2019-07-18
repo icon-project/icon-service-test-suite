@@ -1,12 +1,14 @@
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
+
 
 from iconsdk.wallet.wallet import KeyWallet
 from iconservice.base.type_converter_templates import ConstantKeys
 from iconservice.icon_constant import REV_IISS
 
-from test_suite.json_rpc_api.base import Base
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
-ICX_FACTOR = 10 ** 18
+if TYPE_CHECKING:
+    from iconsdk.signed_transaction import SignedTransaction
 
 
 class TestPRepScenario(Base):
@@ -22,9 +24,12 @@ class TestPRepScenario(Base):
 
         # 1 set revision to REV_IISS
         print('start #1')
-        set_rev_tx = self.create_set_revision_tx(self._test1, REV_IISS)
-        set_rev_tx_result = self.process_transaction(set_rev_tx, self.icon_service)
-        self.assertEqual(set_rev_tx_result['status'], 1)
+        tx: 'SignedTransaction' = self.create_set_revision_tx(self._test1, REV_IISS)
+        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
 
         # 2 transfer to PREPS and ICONists
         print('start #2')
