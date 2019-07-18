@@ -13,6 +13,7 @@ from iconsdk.wallet.wallet import KeyWallet
 from iconservice.base.type_converter_templates import ConstantKeys
 from tbears.config.tbears_config import tbears_server_config, ConfigKey
 from tbears.libs.icon_integrate_test import IconIntegrateTestBase, SCORE_INSTALL_ADDRESS
+from iconservice.icon_constant import ConfigKey as ISConfigKey
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -595,6 +596,60 @@ class Base(IconIntegrateTestBase):
             self.assertEqual(True, tx_result['status'])
             accounts[i].balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
             accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+    def refund_icx(self, accounts: List['TestAccount']):
+        new_accounts: List['TestAccount'] = []
+        for account in accounts:
+            if self.get_balance(account) > 0:
+                new_accounts.append(account)
+
+        # set stake users 0% again
+        stake_value: int = 0
+        self.set_stake(new_accounts, stake_value)
+
+        # make blocks
+        prev_block: int = self._get_block_height()
+        max_expired_block_height: int = self.config[ISConfigKey.IISS_META_DATA][ISConfigKey.UN_STAKE_LOCK_MAX]
+        self._make_blocks(prev_block + max_expired_block_height + 1)
+
+        # get balance
+        for account in new_accounts:
+            response: int = self.get_balance(account)
+            expected_result: int = account.balance
+            self.assertEqual(expected_result, response)
+
+        # refund icx
+        self._refund_icx(new_accounts)
+
+        # get balance
+        for account in new_accounts:
+            response: int = self.get_balance(account)
+            expected_result: int = 0
+            self.assertEqual(expected_result, response)
+
+    def _refund_icx(self, accounts: List['TestAccount']):
+        if len(accounts) == 0:
+            return
+
+        tx: 'Transaction' = self.create_transfer_icx_tx_without_sign(accounts[0], accounts[0], 0)
+        estimate_step: int = self.estimate_step(tx)
+        step_price: int = self.get_step_price()
+        estimate_fee: int = step_price * estimate_step
+
+        admin: 'TestAccount' = self.load_admin()
+        tx_list = []
+        for account in accounts:
+            tx: 'SignedTransaction' = self.create_transfer_icx_tx(account,
+                                                                  admin,
+                                                                  account.balance - estimate_fee,
+                                                                  step_limit=100_000)
+            tx_list.append(tx)
+
+        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
 
 
 class TestAccount:

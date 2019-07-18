@@ -1,7 +1,7 @@
 
 from typing import TYPE_CHECKING, List
 
-from iconservice.icon_constant import ConfigKey, PREP_MAIN_AND_SUB_PREPS
+from iconservice.icon_constant import PREP_MAIN_AND_SUB_PREPS
 
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
@@ -150,16 +150,8 @@ class TestStake(Base):
             self.assertEqual(expected_result['unstake'], response['unstake'])
             self.assertIn('unstakeBlockHeight', response)
 
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_stake2(self):
         init_balance: int = 1000 * ICX_FACTOR
@@ -299,16 +291,8 @@ class TestStake(Base):
             self.assertEqual(expected_result['unstake'], response['unstake'])
             self.assertIn('unstakeBlockHeight', response)
 
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_stake3(self):
         init_balance: int = 100 * ICX_FACTOR
@@ -343,3 +327,6 @@ class TestStake(Base):
         expected_balance: int = accounts[0].balance - stake_value
         response: int = self.get_balance(accounts[0])
         self.assertEqual(expected_balance, response)
+
+        # refund icx
+        self.refund_icx(accounts)

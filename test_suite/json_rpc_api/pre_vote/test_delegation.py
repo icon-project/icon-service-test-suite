@@ -30,6 +30,54 @@ class TestDelegation(Base):
         tx: 'Transaction' = self.create_set_delegation_tx_without_sign(accounts[0], origin_delegations_list[0])
         estimate_step: int = self.estimate_step(tx)
 
+        # refund icx
+        self.refund_icx(accounts)
+
+    def test_delegate2(self):
+        init_balance: int = 1000 * ICX_FACTOR
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        init_block_height: int = self._get_block_height()
+
+        # gain 1000 icx
+        self.distribute_icx(accounts, init_balance)
+
+        # stake 100 icx
+        stake_value: int = 100 * ICX_FACTOR
+        self.set_stake(accounts, stake_value)
+
+        # setDelegation request will be failed due to duplicated addresses
+        origin_delegations_list: list = []
+        origin_delegations: List[Tuple['TestAccount', int]] = []
+        for i in range(IISS_MAX_DELEGATIONS):
+            origin_delegations.append((accounts[0], stake_value))
+        origin_delegations_list.append(origin_delegations)
+
+        tx_list: list = []
+        for i, account in enumerate(accounts):
+            tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
+            tx_list.append(tx)
+        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(False, tx_result['status'])
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+        # get delegation
+        for account in accounts:
+            expected_voting_power: int = stake_value
+            expected_result: dict = {
+                "delegations": [],
+                "totalDelegated": hex(0),
+                "votingPower": hex(expected_voting_power)
+            }
+            response: dict = self.get_delegation(account)
+            self.assertEqual(expected_result, response)
+
+        # refund icx
+        self.refund_icx(accounts)
+
     def test_delegate3(self):
         init_balance: int = 3000 * ICX_FACTOR
         account_count: int = 2
@@ -108,20 +156,8 @@ class TestDelegation(Base):
         response: dict = self.get_delegation(accounts[user_id])
         self.assertEqual(expected_result, response)
 
-        # set stake users 0% again
-        stake_value: int = 0
-        self.set_stake(accounts, stake_value)
-
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_delegate4(self):
         init_balance: int = 3000 * ICX_FACTOR
@@ -201,20 +237,8 @@ class TestDelegation(Base):
         response: dict = self.get_delegation(accounts[user_id])
         self.assertEqual(expected_result, response)
 
-        # set stake users 0% again
-        stake_value: int = 0
-        self.set_stake(accounts, stake_value)
-
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_delegate5(self):
         init_balance: int = 3000 * ICX_FACTOR
@@ -292,20 +316,8 @@ class TestDelegation(Base):
         response: dict = self.get_delegation(accounts[user_id])
         self.assertEqual(expected_result, response)
 
-        # set stake users 0% again
-        stake_value: int = 0
-        self.set_stake(accounts, stake_value)
-
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_delegate6(self):
         init_balance: int = 3000 * ICX_FACTOR
@@ -449,20 +461,8 @@ class TestDelegation(Base):
         response: dict = self.get_delegation(accounts[user_id])
         self.assertEqual(expected_result, response)
 
-        # set stake users 0% again
-        stake_value: int = 0
-        self.set_stake(accounts, stake_value)
-
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_delegate7(self):
         init_balance: int = 3000 * ICX_FACTOR
@@ -529,6 +529,7 @@ class TestDelegation(Base):
         origin_delegations_list: list = [[]] * account_count
         self.set_delegation(accounts, origin_delegations_list)
 
+        # get delegation
         for account in accounts:
             expected_voting_power: int = stake_value
             expected_result: dict = {
@@ -545,17 +546,5 @@ class TestDelegation(Base):
             self.assertEqual(hex(stake_value), response["stake"])
             self.assertEqual(hex(0), response["delegated"])
 
-        # set stake users 0% again
-        stake_value: int = 0
-        self.set_stake(accounts, stake_value)
-
-        # make blocks
-        prev_block: int = self._get_block_height()
-        max_expired_block_height: int = self.config[ConfigKey.IISS_META_DATA][ConfigKey.UN_STAKE_LOCK_MAX]
-        self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        # get balance
-        for account in accounts:
-            response: int = self.get_balance(account)
-            expected_result: int = account.balance
-            self.assertEqual(expected_result, response)
+        # refund icx
+        self.refund_icx(accounts)
