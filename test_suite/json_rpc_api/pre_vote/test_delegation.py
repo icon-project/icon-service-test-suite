@@ -1,16 +1,34 @@
 from typing import TYPE_CHECKING, List, Tuple, Dict
 
-from iconsdk.wallet.wallet import KeyWallet
 from iconservice.icon_constant import ConfigKey, IISS_MAX_DELEGATIONS
 
-from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
     from test_suite.json_rpc_api.base import TestAccount
+    from iconsdk.builder.transaction_builder import Transaction
 
 
 class TestDelegation(Base):
+    def test_delegate1(self):
+        init_balance: int = 1000 * ICX_FACTOR
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        init_block_height: int = self._get_block_height()
+
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        # set stake
+        stake_value: int = 100 * ICX_FACTOR
+        self.set_stake(accounts, stake_value)
+
+        # set delegation
+        delegation_value: int = stake_value
+        origin_delegations_list: list = [[(accounts[0], delegation_value)]]
+        tx: 'Transaction' = self.create_set_delegation_tx_without_sign(accounts[0], origin_delegations_list[0])
+        estimate_step: int = self.estimate_step(tx)
 
     def test_delegate3(self):
         init_balance: int = 3000 * ICX_FACTOR
