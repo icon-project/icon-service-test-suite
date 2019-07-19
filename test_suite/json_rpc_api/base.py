@@ -546,6 +546,19 @@ class Base(IconIntegrateTestBase):
         return self.icon_service_for_debug.estimate_step(tx)
 
     # ============================================================= #
+    def claim_iscore(self, accounts: List["TestAccount"]):
+        tx_list: list = []
+        for account in accounts:
+            tx: 'SignedTransaction' = self.create_claim_iscore_tx(account)
+            tx_list.append(tx)
+
+        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(True, tx_result['status'])
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
     def distribute_icx(self, accounts: List['TestAccount'], init_balance: int):
         admin: 'TestAccount' = self.load_admin()
         tx_list = []
