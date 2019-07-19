@@ -169,12 +169,22 @@ class TestIScore(Base):
         self.assertEqual(hex(0), response['iscore'])
 
         # increase block height to end of 2nd calculation
-        _: int = self._make_blocks_to_end_calculation()
+        calculate2_block_height: int = self._make_blocks_to_end_calculation()
+        iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1), response['iscore'])
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
+
+        # increase block height to end of 3rd calculation
+        calculate3_block_height: int = self._make_blocks_to_end_calculation()
+        _: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height)
+
+        # queryIScore
+        response: dict = self.query_iscore(accounts[0])
+        self.assertEqual(hex(iscore1 + iscore2), response['iscore'])
+        self.assertEqual(hex(calculate2_block_height), response['blockHeight'])
 
         # estimate
         tx: 'Transaction' = self.create_claim_iscore_tx_without_sign(accounts[0])
@@ -193,10 +203,10 @@ class TestIScore(Base):
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        expected_claimed_icx = iscore1 % 1000
+        expected_claimed_icx = (iscore1 + iscore2) % 1000
         for tx_result in tx_results:
             self.assertEqual('IScoreClaimed(int,int)', tx_result['eventLogs'][0]["indexed"][0])
-            self.assertEqual(hex(iscore1), tx_result['eventLogs'][0]["data"][0])
+            self.assertEqual(hex(iscore1 + iscore2), tx_result['eventLogs'][0]["data"][0])
             self.assertEqual(hex(expected_claimed_icx), tx_result['eventLogs'][0]["data"][1])
 
         expected_balance: int = account_1_balance_before_claim + expected_claimed_icx - estimate_fee

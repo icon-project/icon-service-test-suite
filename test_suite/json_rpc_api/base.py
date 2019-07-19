@@ -557,8 +557,8 @@ class Base(IconIntegrateTestBase):
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
-            claimed_icx = tx_results[i]['eventLogs'][0]["data"][1]
-            account.balance += claimed_icx
+            claimed_icx: str = tx_results[i]['eventLogs'][0]["data"][1]
+            account.balance += int(claimed_icx, 16)
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def distribute_icx(self, accounts: List['TestAccount'], init_balance: int):
