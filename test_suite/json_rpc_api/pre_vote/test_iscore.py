@@ -1,13 +1,10 @@
-from typing import TYPE_CHECKING, List, Dict
+from typing import List, Dict
 
 from iconservice.icon_constant import IISS_ANNUAL_BLOCK, ISCORE_EXCHANGE_RATE
 from iconservice.icx.issue.issue_formula import IssueFormula
 
-from test_suite.json_rpc_api.base import TestAccount
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR
-
-if TYPE_CHECKING:
-    from iconsdk.signed_transaction import SignedTransaction
+from test_suite.json_rpc_api.base import TestAccount
 
 MIN_DELEGATION = 788_400
 min_rrep = 200
@@ -115,3 +112,6 @@ class TestIScore(Base):
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore_after_claim + iscore3), response['iscore'])
         self.assertEqual(hex(calculate3_block_height), response['blockHeight'])
+
+        # refund icx
+        self.refund_icx(accounts)

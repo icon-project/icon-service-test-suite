@@ -548,8 +548,8 @@
     "blockConfirmEmpty": false,
     "blockGeneratorRotation": true,
     "blockGenerateCountPerLeader": 10,
-    "blockManualConfirm": false,
-    "networkDelayMs": 1000,
+    "blockManualConfirm": true,
+    "networkDelayMs": 300,
     "iissCalculatePeriod": 10,
     "termPeriod": 10,
     "iissMetaData": {
