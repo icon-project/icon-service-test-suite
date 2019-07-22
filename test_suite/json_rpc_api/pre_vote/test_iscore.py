@@ -1,10 +1,14 @@
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 
 from iconservice.icon_constant import IISS_ANNUAL_BLOCK, ISCORE_EXCHANGE_RATE
 from iconservice.icx.issue.issue_formula import IssueFormula
 
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 from test_suite.json_rpc_api.base import TestAccount
+
+if TYPE_CHECKING:
+    from iconsdk.builder.transaction_builder import Transaction
+    from iconsdk.signed_transaction import SignedTransaction
 
 MIN_DELEGATION = 788_400
 min_rrep = 200
@@ -220,3 +224,123 @@ class TestIScore(Base):
 
         # refund icx
         self.refund_icx(accounts)
+
+    def test_iscore1(self):
+        init_balance: int = 10_000 * ICX_FACTOR
+        stake_value: int = 5_000 * ICX_FACTOR
+        account_count: int = 2
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register P-Rep
+        self.register_prep(accounts[1:])
+
+        # setStake
+        self.set_stake(accounts[:1], stake_value)
+
+        # getStake
+        response: dict = self.get_stake(accounts[0])
+        expect_result: dict = {
+            "stake": hex(stake_value),
+        }
+        self.assertEqual(expect_result, response)
+
+        # delegate to P-Rep
+        delegation_value: int = stake_value
+        origin_delegations: list = [[(accounts[1], delegation_value)]]
+        self.set_delegation(accounts[:1], origin_delegations)
+
+        # query delegation
+        user_id: int = 0
+        expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations[user_id])
+        expect_result: dict = {
+            "delegations": expected_delegations,
+            "totalDelegated": hex(delegation_value),
+            "votingPower": hex(stake_value - delegation_value)
+        }
+        response: dict = self.get_delegation(accounts[user_id])
+        self.assertEqual(expect_result, response)
+
+        # queryIScore
+        response: dict = self.query_iscore(accounts[0])
+        self.assertEqual(hex(0), response['iscore'])
+
+        # test
+        expected: list = []
+        actual: list = []
+        for i in range(10):
+            start_block = self._get_block_height()
+            end_block: int = self._make_blocks_to_end_calculation()
+            actual_end_block: int = self.icon_service.get_block("latest")["height"]
+            self.assertEqual(end_block, actual_end_block)
+            iscore: int = self._calculate_iscore(delegation_value, start_block, end_block)
+            expected.append(iscore)
+            response: dict = self.query_iscore(accounts[0])
+            actual.append(int(response['iscore'], 16))
+        expected = expected[:-2]
+        for i in range(2, len(actual)):
+            actual[i - 2] = actual[i] - actual[i - 1]
+        actual = actual[:-2]
+
+        print("expected", expected)
+        print("actual", actual)
+
+        # refund icx
+        self.refund_icx(accounts)
+
+    def test_iscore2(self):
+        init_balance: int = 10_000 * ICX_FACTOR
+        stake_value: int = 5_000 * ICX_FACTOR
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register P-Rep
+        self.register_prep(accounts)
+
+        # setStake
+        self.set_stake(accounts[:1], stake_value)
+
+        # getStake
+        response: dict = self.get_stake(accounts[0])
+        expect_result: dict = {
+            "stake": hex(stake_value),
+        }
+        self.assertEqual(expect_result, response)
+
+        # delegate to P-Rep
+        delegation_value: int = stake_value
+        origin_delegations: list = [[(accounts[0], delegation_value)]]
+        self.set_delegation(accounts[:1], origin_delegations)
+
+        # query delegation
+        user_id: int = 0
+        expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations[user_id])
+        expect_result: dict = {
+            "delegations": expected_delegations,
+            "totalDelegated": hex(delegation_value),
+            "votingPower": hex(stake_value - delegation_value)
+        }
+        response: dict = self.get_delegation(accounts[user_id])
+        self.assertEqual(expect_result, response)
+
+        # queryIScore
+        response: dict = self.query_iscore(accounts[0])
+        self.assertEqual(hex(0), response['iscore'])
+
+        # test
+        # queryIScore
+        actual: list = []
+        for i in range(10):
+            end_block: int = self._make_blocks_to_end_calculation()
+            actual_end_block: int = self.icon_service.get_block("latest")["height"]
+            self.assertEqual(end_block, actual_end_block)
+            response: dict = self.query_iscore(accounts[0])
+            actual.append(int(response['iscore'], 16))
+
+        for i in range(2, len(actual)):
+            actual[i - 2] = actual[i] - actual[i - 1]
+        actual = actual[:-2]
+        print(actual)

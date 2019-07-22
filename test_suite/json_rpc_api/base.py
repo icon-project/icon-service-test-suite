@@ -613,6 +613,9 @@ class Base(IconIntegrateTestBase):
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def refund_icx(self, accounts: List['TestAccount']):
+        origin_delegations_list: list = [[]] * len(accounts)
+        self.set_delegation(accounts, origin_delegations_list)
+
         new_accounts: List['TestAccount'] = []
         for account in accounts:
             if self.get_balance(account) > 0:

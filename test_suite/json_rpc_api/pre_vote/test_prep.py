@@ -1,8 +1,9 @@
-from typing import List, Tuple, Dict
-
-from iconsdk.signed_transaction import SignedTransaction
+from typing import List, Tuple, Dict, TYPE_CHECKING
 
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX, TestAccount
+
+if TYPE_CHECKING:
+    from iconsdk.signed_transaction import SignedTransaction
 
 
 class TestPRep(Base):
