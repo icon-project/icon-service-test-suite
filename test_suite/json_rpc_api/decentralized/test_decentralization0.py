@@ -1,21 +1,18 @@
-from typing import TYPE_CHECKING, List
+from typing import List
 
 from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
 
-from test_suite.json_rpc_api.base import Base, PREP_REGISTER_COST_ICX, ICX_FACTOR, TestAccount
-
-if TYPE_CHECKING:
-    pass
+from test_suite.json_rpc_api.base import Base, PREP_REGISTER_COST_ICX, ICX_FACTOR, Account
 
 
 class TestDecentralization(Base):
     def test_func(self):
-        builtin_owner = TestAccount(self._test1)
+        builtin_owner = Account(self._test1)
         prep_register_cost: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
         account_count: int = PREP_MAIN_PREPS * 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
-        main_preps: List['TestAccount'] = accounts[:PREP_MAIN_PREPS]
-        iconists: List['TestAccount'] = accounts[PREP_MAIN_PREPS:]
+        accounts: List['Account'] = self.create_accounts(account_count)
+        main_preps: List['Account'] = accounts[:PREP_MAIN_PREPS]
+        iconists: List['Account'] = accounts[PREP_MAIN_PREPS:]
         total_supply: int = self.icon_service.get_total_supply()
 
         # Minimum_delegate_amount is 0.02 * total_supply

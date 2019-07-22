@@ -7,7 +7,7 @@ from iconservice.icon_constant import REV_IISS
 from .json_rpc_api.base import Base, GOVERNANCE_ADDRESS
 
 if TYPE_CHECKING:
-    from test_suite.json_rpc_api.base import TestAccount
+    from test_suite.json_rpc_api.base import Account
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,7 +23,7 @@ class TestInit(Base):
         super().setUp()
 
     def test_init(self):
-        admin: 'TestAccount' = self.load_admin()
+        admin: 'Account' = self.load_admin()
         # deploy governance SCORE
         for score in GOVERNANCE_SCORES:
             score_path = os.path.abspath(os.path.join(DIR_PATH, f'./data/{score}.zip'))

@@ -1,9 +1,10 @@
 from typing import List, Tuple, Dict, TYPE_CHECKING
 
-from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX, TestAccount
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
+    from ..base import Account
 
 
 class TestPRep(Base):
@@ -11,7 +12,7 @@ class TestPRep(Base):
     def test_1_register_one_prep_invalid_case1(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         account = accounts[0]
 
         # create
@@ -38,7 +39,7 @@ class TestPRep(Base):
     def test_2_register_one_prep_invalid_case2(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         account = accounts[0]
 
         # create
@@ -65,7 +66,7 @@ class TestPRep(Base):
     def test_3_register_one_prep(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         account = accounts[0]
 
         # create
@@ -126,9 +127,9 @@ class TestPRep(Base):
     def test_4_register_100_preps_and_check_total_delegated(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
         account_count: int = 110
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
-        preps: List['TestAccount'] = accounts[:100]
-        iconists: List['TestAccount'] = accounts[100:]
+        accounts: List['Account'] = self.create_accounts(account_count)
+        preps: List['Account'] = accounts[:100]
+        iconists: List['Account'] = accounts[100:]
         stake_value: int = 100
 
         initial_total_delegated: int = int(self.get_prep_list()['totalDelegated'], 16)
@@ -147,7 +148,7 @@ class TestPRep(Base):
         origin_delegations_list: list = []
         expected_delegation_values: dict = {}
         for i, wallet in enumerate(iconists):
-            origin_delegations: List[Tuple['TestAccount', int]] = []
+            origin_delegations: List[Tuple['Account', int]] = []
 
             delegation_value: int = stake_value
             expected_delegation_values[i] = delegation_value

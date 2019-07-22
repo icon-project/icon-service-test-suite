@@ -4,11 +4,11 @@ from iconservice.icon_constant import IISS_ANNUAL_BLOCK, ISCORE_EXCHANGE_RATE
 from iconservice.icx.issue.issue_formula import IssueFormula
 
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR
-from test_suite.json_rpc_api.base import TestAccount
 
 if TYPE_CHECKING:
     from iconsdk.builder.transaction_builder import Transaction
     from iconsdk.signed_transaction import SignedTransaction
+    from ..base import Account
 
 MIN_DELEGATION = 788_400
 min_rrep = 200
@@ -35,7 +35,7 @@ class TestIScore(Base):
         init_balance: int = 3000 * ICX_FACTOR
         stake_value: int = MIN_DELEGATION
         account_count: int = 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
 
         self.distribute_icx(accounts, init_balance)
 
@@ -124,7 +124,7 @@ class TestIScore(Base):
         init_balance: int = 3000 * ICX_FACTOR
         stake_value: int = MIN_DELEGATION * 10
         account_count: int = 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
 
         self.distribute_icx(accounts, init_balance)
 
@@ -229,7 +229,7 @@ class TestIScore(Base):
         init_balance: int = 10_000 * ICX_FACTOR
         stake_value: int = 5_000 * ICX_FACTOR
         account_count: int = 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
 
         self.distribute_icx(accounts, init_balance)
 
@@ -293,7 +293,7 @@ class TestIScore(Base):
         init_balance: int = 10_000 * ICX_FACTOR
         stake_value: int = 5_000 * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
 
         self.distribute_icx(accounts, init_balance)
 

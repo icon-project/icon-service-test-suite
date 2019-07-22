@@ -6,8 +6,8 @@ from iconservice.icon_constant import PREP_MAIN_AND_SUB_PREPS
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
-    from test_suite.json_rpc_api.base import TestAccount
     from iconsdk.signed_transaction import Transaction, SignedTransaction
+    from test_suite.json_rpc_api.base import Account
 
 
 class TestStake(Base):
@@ -15,7 +15,7 @@ class TestStake(Base):
     def test_stake1(self):
         init_balance: int = 1000 * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create user0
@@ -162,7 +162,7 @@ class TestStake(Base):
     def test_stake2(self):
         init_balance: int = 1000 * ICX_FACTOR
         account_count: int = PREP_MAIN_AND_SUB_PREPS
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create users
@@ -309,7 +309,7 @@ class TestStake(Base):
     def test_stake3(self):
         init_balance: int = 100 * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # gain 100 icx

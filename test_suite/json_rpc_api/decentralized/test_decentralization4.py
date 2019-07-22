@@ -3,7 +3,7 @@ from typing import List
 
 from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
 
-from test_suite.json_rpc_api.base import ICX_FACTOR, Base, PREP_REGISTER_COST_ICX, TestAccount
+from test_suite.json_rpc_api.base import ICX_FACTOR, Base, PREP_REGISTER_COST_ICX, Account
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -11,12 +11,12 @@ DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 class TestDecentralization4(Base):
 
     def test_4_decentralization(self):
-        builtin_owner = TestAccount(self._test1)
+        builtin_owner = Account(self._test1)
         prep_register_cost: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
         account_count: int = PREP_MAIN_PREPS * 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
-        main_preps: List['TestAccount'] = accounts[:PREP_MAIN_PREPS]
-        iconists: List['TestAccount'] = accounts[PREP_MAIN_PREPS:]
+        accounts: List['Account'] = self.create_accounts(account_count)
+        main_preps: List['Account'] = accounts[:PREP_MAIN_PREPS]
+        iconists: List['Account'] = accounts[PREP_MAIN_PREPS:]
         total_supply: int = self.icon_service.get_total_supply()
 
         # Minimum_delegate_amount is 0.02 * total_supply

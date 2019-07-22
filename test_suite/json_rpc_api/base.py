@@ -86,7 +86,7 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_deploy_score_tx(score_path: str,
-                               from_: 'TestAccount',
+                               from_: 'Account',
                                to_: str = SCORE_INSTALL_ADDRESS) -> 'SignedTransaction':
         transaction: 'Transaction' = Base.create_deploy_score_tx_without_sign(score_path,
                                                                               from_,
@@ -96,7 +96,7 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_deploy_score_tx_without_sign(score_path: str,
-                                            from_: 'TestAccount',
+                                            from_: 'Account',
                                             to: str = SCORE_INSTALL_ADDRESS) -> 'Transaction':
         return DeployTransactionBuilder() \
             .from_(from_.wallet.get_address()) \
@@ -109,7 +109,7 @@ class Base(IconIntegrateTestBase):
             .build()
 
     @staticmethod
-    def create_set_revision_tx(from_: 'TestAccount',
+    def create_set_revision_tx(from_: 'Account',
                                revision: int) -> 'SignedTransaction':
         transaction: 'Transaction' = Base.create_set_revision_tx_without_sign(from_,
                                                                               revision)
@@ -117,7 +117,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_set_revision_tx_without_sign(from_: 'TestAccount',
+    def create_set_revision_tx_without_sign(from_: 'Account',
                                             revision: int) -> 'Transaction':
         return CallTransactionBuilder() \
             .from_(from_.wallet.get_address()) \
@@ -130,8 +130,8 @@ class Base(IconIntegrateTestBase):
             .build()
 
     @staticmethod
-    def create_transfer_icx_tx(from_: 'TestAccount',
-                               to_: Union['TestAccount', str],
+    def create_transfer_icx_tx(from_: 'Account',
+                               to_: Union['Account', str],
                                value: int,
                                step_limit: int = DEFAULT_STEP_LIMIT,
                                nid: int = DEFAULT_NID,
@@ -147,14 +147,14 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_transfer_icx_tx_without_sign(from_: 'TestAccount',
-                                            to_: Union['TestAccount', str],
+    def create_transfer_icx_tx_without_sign(from_: 'Account',
+                                            to_: Union['Account', str],
                                             value: int,
                                             step_limit: int = DEFAULT_STEP_LIMIT,
                                             nid: int = DEFAULT_NID,
                                             nonce: int = 0) -> 'Transaction':
 
-        if isinstance(to_, TestAccount):
+        if isinstance(to_, Account):
             to_ = to_.wallet.get_address()
 
         return TransactionBuilder() \
@@ -167,7 +167,7 @@ class Base(IconIntegrateTestBase):
             .build()
 
     @staticmethod
-    def create_register_prep_tx(from_: 'TestAccount',
+    def create_register_prep_tx(from_: 'Account',
                                 reg_data: Dict[str, Union[str, bytes]] = None,
                                 value: int = 2000 * ICX_FACTOR,
                                 step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
@@ -183,7 +183,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_register_prep_tx_without_sign(account: 'TestAccount',
+    def create_register_prep_tx_without_sign(account: 'Account',
                                              reg_data: Dict[str, Union[str, bytes]] = None,
                                              value: int = 2000 * ICX_FACTOR,
                                              step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
@@ -204,7 +204,7 @@ class Base(IconIntegrateTestBase):
             build()
 
     @staticmethod
-    def create_unregister_prep_tx(from_: 'TestAccount',
+    def create_unregister_prep_tx(from_: 'Account',
                                   value: int = 0,
                                   step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                   nid: int = DEFAULT_NID,
@@ -219,7 +219,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_unregister_prep_tx_without_sign(from_: 'TestAccount',
+    def create_unregister_prep_tx_without_sign(from_: 'Account',
                                                value: int = 0,
                                                step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                                nid: int = DEFAULT_NID,
@@ -236,7 +236,7 @@ class Base(IconIntegrateTestBase):
             build()
 
     @staticmethod
-    def create_set_prep_tx(from_: 'TestAccount',
+    def create_set_prep_tx(from_: 'Account',
                            irep: int = None,
                            set_data: Dict[str, Union[str, bytes]] = None,
                            value: int = 0,
@@ -254,7 +254,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_set_prep_tx_without_sign(from_: 'TestAccount',
+    def create_set_prep_tx_without_sign(from_: 'Account',
                                         irep: int = None,
                                         set_data: Dict[str, Union[str, bytes]] = None,
                                         value: int = 0,
@@ -278,7 +278,7 @@ class Base(IconIntegrateTestBase):
             build()
 
     @staticmethod
-    def create_set_stake_tx(from_: 'TestAccount',
+    def create_set_stake_tx(from_: 'Account',
                             stake: int,
                             value: int = 0,
                             step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
@@ -295,7 +295,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_set_stake_tx_without_sign(from_: 'TestAccount',
+    def create_set_stake_tx_without_sign(from_: 'Account',
                                          stake: int,
                                          value: int = 0,
                                          step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
@@ -314,8 +314,8 @@ class Base(IconIntegrateTestBase):
             build()
 
     @staticmethod
-    def create_set_delegation_tx(from_: 'TestAccount',
-                                 delegations: List[Tuple['TestAccount', int]],
+    def create_set_delegation_tx(from_: 'Account',
+                                 delegations: List[Tuple['Account', int]],
                                  value: int = 0,
                                  step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                  nid: int = DEFAULT_NID,
@@ -330,8 +330,8 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_set_delegation_tx_without_sign(from_: 'TestAccount',
-                                              delegations: List[Tuple['TestAccount', int]],
+    def create_set_delegation_tx_without_sign(from_: 'Account',
+                                              delegations: List[Tuple['Account', int]],
                                               value: int = 0,
                                               step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                               nid: int = DEFAULT_NID,
@@ -350,7 +350,7 @@ class Base(IconIntegrateTestBase):
             build()
 
     @staticmethod
-    def create_claim_iscore_tx(from_: 'TestAccount',
+    def create_claim_iscore_tx(from_: 'Account',
                                value: int = 0,
                                step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                nid: int = DEFAULT_NID,
@@ -365,7 +365,7 @@ class Base(IconIntegrateTestBase):
         return signed_transaction
 
     @staticmethod
-    def create_claim_iscore_tx_without_sign(from_: 'TestAccount',
+    def create_claim_iscore_tx_without_sign(from_: 'Account',
                                             value: int = 0,
                                             step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                             nid: int = DEFAULT_NID,
@@ -417,9 +417,9 @@ class Base(IconIntegrateTestBase):
         return response
 
     def get_prep(self,
-                 prep: Union['TestAccount', str]) -> dict:
+                 prep: Union['Account', str]) -> dict:
 
-        if isinstance(prep, TestAccount):
+        if isinstance(prep, Account):
             prep = prep.wallet.get_address()
 
         call = CallBuilder() \
@@ -432,9 +432,9 @@ class Base(IconIntegrateTestBase):
         return response
 
     def get_stake(self,
-                  address: Union['TestAccount', str]) -> dict:
+                  address: Union['Account', str]) -> dict:
 
-        if isinstance(address, TestAccount):
+        if isinstance(address, Account):
             address = address.wallet.get_address()
 
         call = CallBuilder() \
@@ -447,9 +447,9 @@ class Base(IconIntegrateTestBase):
         return response
 
     def get_delegation(self,
-                       address: Union['TestAccount', str]) -> dict:
+                       address: Union['Account', str]) -> dict:
 
-        if isinstance(address, TestAccount):
+        if isinstance(address, Account):
             address = address.wallet.get_address()
 
         call = CallBuilder() \
@@ -462,9 +462,9 @@ class Base(IconIntegrateTestBase):
         return response
 
     def get_balance(self,
-                    address: Union['TestAccount', str]) -> int:
+                    address: Union['Account', str]) -> int:
 
-        if isinstance(address, TestAccount):
+        if isinstance(address, Account):
             address = address.wallet.get_address()
 
         return self.icon_service.get_balance(address)
@@ -479,9 +479,9 @@ class Base(IconIntegrateTestBase):
         return int(response, 16)
 
     def query_iscore(self,
-                     address: Union['TestAccount', str]) -> dict:
+                     address: Union['Account', str]) -> dict:
 
-        if isinstance(address, TestAccount):
+        if isinstance(address, Account):
             address = address.wallet.get_address()
 
         call = CallBuilder() \
@@ -503,7 +503,7 @@ class Base(IconIntegrateTestBase):
         return response
 
     @staticmethod
-    def _create_register_prep_params(account: 'TestAccount') -> Dict[str, Union[str, bytes]]:
+    def _create_register_prep_params(account: 'Account') -> Dict[str, Union[str, bytes]]:
         name = f"node{account.wallet.get_address()}"
 
         return {
@@ -518,20 +518,20 @@ class Base(IconIntegrateTestBase):
         }
 
     @staticmethod
-    def create_delegation_params(params: List[Tuple['TestAccount', int]]) -> List[Dict[str, str]]:
+    def create_delegation_params(params: List[Tuple['Account', int]]) -> List[Dict[str, str]]:
         return [{"address": account.wallet.get_address(), "value": hex(value)}
                 for (account, value) in params
                 if value > 0]
 
-    def load_admin(self) -> 'TestAccount':
+    def load_admin(self) -> 'Account':
         balance: int = self.get_balance(self._test1.get_address())
-        return TestAccount(self._test1, balance)
+        return Account(self._test1, balance)
 
-    def load_test_accounts(self) -> List['TestAccount']:
-        accounts: List['TestAccount'] = []
+    def load_test_accounts(self) -> List['Account']:
+        accounts: List['Account'] = []
         for wallet in self._wallet_array:
             balance: int = self.get_balance(wallet)
-            accounts.append(TestAccount(wallet, balance))
+            accounts.append(Account(wallet, balance))
         return accounts
 
     @staticmethod
@@ -539,14 +539,14 @@ class Base(IconIntegrateTestBase):
         accounts: list = []
         wallets: List['KeyWallet'] = [KeyWallet.create() for _ in range(count)]
         for wallet in wallets:
-            accounts.append(TestAccount(wallet))
+            accounts.append(Account(wallet))
         return accounts
 
     def estimate_step(self, tx: 'Transaction') -> int:
         return self.icon_service_for_debug.estimate_step(tx)
 
     # ============================================================= #
-    def claim_iscore(self, accounts: List["TestAccount"]):
+    def claim_iscore(self, accounts: List["Account"]):
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_claim_iscore_tx(account)
@@ -561,8 +561,8 @@ class Base(IconIntegrateTestBase):
             account.balance += int(claimed_icx, 16)
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
-    def distribute_icx(self, accounts: List['TestAccount'], init_balance: int):
-        admin: 'TestAccount' = self.load_admin()
+    def distribute_icx(self, accounts: List['Account'], init_balance: int):
+        admin: 'Account' = self.load_admin()
         tx_list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(admin, account, init_balance)
@@ -575,7 +575,7 @@ class Base(IconIntegrateTestBase):
             self.assertEqual(True, tx_results[i]['status'])
             account.balance += init_balance
 
-    def set_stake(self, accounts: List['TestAccount'], stake_value: int):
+    def set_stake(self, accounts: List['Account'], stake_value: int):
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
@@ -587,7 +587,7 @@ class Base(IconIntegrateTestBase):
             self.assertEqual(True, tx_results[i]['status'])
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
-    def set_delegation(self, accounts: List['TestAccount'], origin_delegations_list: list):
+    def set_delegation(self, accounts: List['Account'], origin_delegations_list: list):
         tx_list: list = []
         for i, account in enumerate(accounts):
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
@@ -599,7 +599,7 @@ class Base(IconIntegrateTestBase):
             self.assertEqual(True, tx_results[i]['status'])
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
-    def register_prep(self, accounts: List['TestAccount']):
+    def register_prep(self, accounts: List['Account']):
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
@@ -612,11 +612,11 @@ class Base(IconIntegrateTestBase):
             account.balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
-    def refund_icx(self, accounts: List['TestAccount']):
+    def refund_icx(self, accounts: List['Account']):
         origin_delegations_list: list = [[]] * len(accounts)
         self.set_delegation(accounts, origin_delegations_list)
 
-        new_accounts: List['TestAccount'] = []
+        new_accounts: List['Account'] = []
         for account in accounts:
             if self.get_balance(account) > 0:
                 new_accounts.append(account)
@@ -651,7 +651,7 @@ class Base(IconIntegrateTestBase):
             expected_result: int = 0
             self.assertEqual(expected_result, response)
 
-    def _refund_icx(self, accounts: List['TestAccount']):
+    def _refund_icx(self, accounts: List['Account']):
         if len(accounts) == 0:
             return
 
@@ -660,7 +660,7 @@ class Base(IconIntegrateTestBase):
         step_price: int = self.get_step_price()
         estimate_fee: int = step_price * estimate_step
 
-        admin: 'TestAccount' = self.load_admin()
+        admin: 'Account' = self.load_admin()
         tx_list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_transfer_icx_tx(account,
@@ -676,7 +676,7 @@ class Base(IconIntegrateTestBase):
             self.assertEqual(True, tx_result['status'])
 
 
-class TestAccount:
+class Account:
     def __init__(self, wallet: 'KeyWallet' = None, balance: int = 0):
         self.wallet: 'KeyWallet' = wallet
         self.balance: int = balance
