@@ -118,7 +118,7 @@ class TestIScore(Base):
 
     def test_iscore_event_log_and_estimate_fee(self):
         init_balance: int = 3000 * ICX_FACTOR
-        stake_value: int = MIN_DELEGATION
+        stake_value: int = MIN_DELEGATION * 10
         account_count: int = 2
         accounts: List['TestAccount'] = self.create_accounts(account_count)
 
@@ -204,9 +204,10 @@ class TestIScore(Base):
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         expected_claimed_icx = (iscore1 + iscore2) % 1000
+        expected_claimed_iscore = expected_claimed_icx * 100
         for tx_result in tx_results:
             self.assertEqual('IScoreClaimed(int,int)', tx_result['eventLogs'][0]["indexed"][0])
-            self.assertEqual(hex(iscore1 + iscore2), tx_result['eventLogs'][0]["data"][0])
+            self.assertEqual(hex(expected_claimed_iscore), tx_result['eventLogs'][0]["data"][0])
             self.assertEqual(hex(expected_claimed_icx), tx_result['eventLogs'][0]["data"][1])
 
         expected_balance: int = account_1_balance_before_claim + expected_claimed_icx - estimate_fee
