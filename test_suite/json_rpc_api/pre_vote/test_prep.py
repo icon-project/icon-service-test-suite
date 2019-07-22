@@ -1,15 +1,17 @@
-from typing import List, Tuple, Dict, TYPE_CHECKING
+import copy
+from typing import List, TYPE_CHECKING, Tuple
+
+from iconservice.base.type_converter_templates import ConstantKeys
 
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
 
 if TYPE_CHECKING:
-    from iconsdk.signed_transaction import SignedTransaction
     from ..base import Account
 
 
 class TestPRep(Base):
 
-    def test_1_register_one_prep_invalid_case1(self):
+    def test_1_register_prep(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
         account_count: int = 1
         accounts: List['Account'] = self.create_accounts(account_count)
@@ -18,163 +20,242 @@ class TestPRep(Base):
         # create
         self.distribute_icx(accounts, init_balance)
 
-        # register prep with unfilled data
+        keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.PUBLIC_KEY, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
+                ConstantKeys.EMAIL, ConstantKeys.NAME]
         register_data = self._create_register_prep_params(account)
-        del register_data['p2pEndpoint']
-        tx: 'SignedTransaction' = self.create_register_prep_tx(account, register_data)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
 
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(False, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        # register prep with invalid data
+        for key in keys:
+            data = copy.deepcopy(register_data)
+            data[key] = ''
+            tx = self.create_register_prep_tx(account, data)
+            tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+            self.process_confirm_block_tx(self.icon_service)
+            tx_results = self.get_txresults(self.icon_service, tx_hashes)
+            for i, tx_result in enumerate(tx_results):
+                self.assertEqual(tx_result['status'], 0)
+                account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-        get_prep_response = self.get_prep(account)
-        self.assertTrue(get_prep_response['message'].startswith('P-Rep not found'))
-
-        # refund icx
-        self.refund_icx(accounts)
-
-    def test_2_register_one_prep_invalid_case2(self):
-        init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
-        account_count: int = 1
-        accounts: List['Account'] = self.create_accounts(account_count)
-        account = accounts[0]
-
-        # create
-        self.distribute_icx(accounts, init_balance)
-
-        # register prep with unfilled data
-        register_data = self._create_register_prep_params(account)
-        register_data['name'] = ' '
-        tx: 'SignedTransaction' = self.create_register_prep_tx(account, register_data)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(False, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
-
-        get_prep_response = self.get_prep(account)
-        self.assertTrue(get_prep_response['message'].startswith('P-Rep not found'))
-
-        # refund icx
-        self.refund_icx(accounts)
-
-    def test_3_register_one_prep(self):
-        init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
-        account_count: int = 1
-        accounts: List['Account'] = self.create_accounts(account_count)
-        account = accounts[0]
-
-        # create
-        self.distribute_icx(accounts, init_balance)
-
+        # register prep
         self.register_prep(accounts)
-        # set prep on pre-voting
-        set_prep_data = {
-            "name": "apple node",
-            "email": "apple@banana.com",
-            "website": "https://apple.com",
-            "details": "http://banana.com/detail",
-            "p2pEndpoint": "123.213.123.123:7100"
-        }
-        tx = self.create_set_prep_tx(account, set_data=set_prep_data)
-        tx_hashes: List['SignedTransaction'] = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
+
+        # unregister prep
+        tx = self.create_unregister_prep_tx(account)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+        # register prep (unregistered account)
+        self.distribute_icx(accounts, init_balance)
+
+        tx = self.create_register_prep_tx(account, register_data)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+            account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+            self.assertEqual(tx_result['status'], 0)
 
-        prep_data = self.get_prep(account)
-        self.assertEqual(prep_data['name'], set_prep_data['name'])
-        self.assertEqual(prep_data['email'], set_prep_data['email'])
-        self.assertEqual(prep_data['website'], set_prep_data['website'])
-        self.assertEqual(prep_data['details'], set_prep_data['details'])
-        self.assertEqual(prep_data['p2pEndpoint'], set_prep_data['p2pEndpoint'])
-
-        # set irep on pre-voting
-        irep = 40000
-        params = {
-            "name": "apple node2",
-            "email": "apple@banana.com",
-            "website": "https://apple.com",
-            "details": "http://banana.com/detail",
-            "p2pEndpoint": "123.213.123.123:7100",
-        }
-        tx = self.create_set_prep_tx(account, irep, params)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(False, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
-
-        prep_data = self.get_prep(account)
-        self.assertEqual(prep_data['name'], set_prep_data['name'])
-        self.assertEqual(prep_data['email'], set_prep_data['email'])
-        self.assertEqual(prep_data['website'], set_prep_data['website'])
-        self.assertEqual(prep_data['details'], set_prep_data['details'])
-        self.assertEqual(prep_data['p2pEndpoint'], set_prep_data['p2pEndpoint'])
-        self.assertNotEqual(prep_data['irep'], hex(irep))
-
-        # refund icx
         self.refund_icx(accounts)
 
-    def test_4_register_100_preps_and_check_total_delegated(self):
-        init_balance: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
-        account_count: int = 110
+    def test_2_register_100_preps(self):
+        init_balance: int = (PREP_REGISTER_COST_ICX + 101) * ICX_FACTOR
+        account_count: int = 100
         accounts: List['Account'] = self.create_accounts(account_count)
-        preps: List['Account'] = accounts[:100]
-        iconists: List['Account'] = accounts[100:]
-        stake_value: int = 100
 
-        initial_total_delegated: int = int(self.get_prep_list()['totalDelegated'], 16)
+        main_preps = self.get_main_prep_list()
+        if main_preps['preps']:
+            return
 
         # create
         self.distribute_icx(accounts, init_balance)
 
-        # register preps
+        # register prep account0
+        self.register_prep(accounts[:1])
+
+        # getPRepList
+        preps = self.get_prep_list()['preps']
+        prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
+        self.assertIn(accounts[0].wallet.address, prep_addresses)
+
+        # getSubPRepList
+        sub_preps = self.get_sub_prep_list()['preps']
+        self.assertFalse(sub_preps)
+
+        # getMainPRepList
+        main_preps = self.get_main_prep_list()['preps']
+        self.assertFalse(main_preps)
+
+        # register prep account 1~9
+        self.register_prep(accounts[1:10])
+
+        # getPRepList
+        preps = self.get_prep_list()['preps']
+        prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
+        for account in accounts[:10]:
+            self.assertIn(account.wallet.address, prep_addresses)
+
+        # getSubPRepList
+        sub_preps = self.get_sub_prep_list()['preps']
+        self.assertFalse(sub_preps)
+
+        # getMainPRepList
+        main_preps = self.get_main_prep_list()['preps']
+        self.assertFalse(main_preps)
+
+        # register prep account 11~99
+        self.register_prep(accounts[10:100])
+
+        # getPRepList
+        preps = self.get_prep_list()['preps']
+        prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
+        for i, account in enumerate(accounts):
+            self.assertIn(account.wallet.address, prep_addresses)
+
+        # getSubPRepList
+        sub_preps = self.get_sub_prep_list()['preps']
+        self.assertFalse(sub_preps)
+
+        # getMainPRepList
+        main_preps = self.get_main_prep_list()['preps']
+        self.assertFalse(main_preps)
+
+        # stake 100 icx each accounts
+        self.set_stake(accounts, 100*ICX_FACTOR)
+
+        # delegate n icx each accounts
+        delegate_info: List[Tuple['Account', int]] = \
+            [(prep, (i+1) * ICX_FACTOR) for i, prep in enumerate(accounts)]
+        tx_list = []
+        for i, delegate in enumerate(delegate_info):
+            tx = self.create_set_delegation_tx(accounts[i], [delegate])
+            tx_list.append(tx)
+        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+        # check data sorted properly and totalDelegated
+        preps_info = self.get_prep_list(1, 100)
+        preps = preps_info['preps']
+        prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
+        for i, account in enumerate(reversed(accounts)):
+            self.assertEqual(account.wallet.address, prep_addresses[i])
+
+        preps_info = self.get_prep_list(1, 20)
+        preps = preps_info['preps']
+        prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
+        for i, account in enumerate(reversed(accounts[80:100])):
+            self.assertEqual(account.wallet.address, prep_addresses[i])
+
+        # unregister preps
+        tx_list = []
+        for i, account in enumerate(accounts):
+            tx = self.create_unregister_prep_tx(account)
+            tx_list.append(tx)
+
+        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        self.refund_icx(accounts)
+
+    def test_3_set_prep(self):
+        init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
+        account_count: int = 1
+        accounts: List['Account'] = self.create_accounts(account_count)
+        account = accounts[0]
+
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.PUBLIC_KEY, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
+                ConstantKeys.EMAIL, ConstantKeys.NAME]
+        register_data = self._create_register_prep_params(account)
+
+        # register prep with invalid data
+        for key in keys:
+            data = copy.deepcopy(register_data)
+            data[key] = ''
+            tx = self.create_register_prep_tx(account, data)
+            tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+            self.process_confirm_block_tx(self.icon_service)
+            tx_results = self.get_txresults(self.icon_service, tx_hashes)
+            for i, tx_result in enumerate(tx_results):
+                self.assertEqual(tx_result['status'], 0)
+                account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+        # register prep
         self.register_prep(accounts)
 
-        # stake
-        self.set_stake(iconists, stake_value)
+        set_data = copy.deepcopy(register_data)
+        endpoint = "127.0.0.1:9000"
+        website = "https://website.example.com"
+        details = "https://website.example.com/details.json"
+        email = "myemail@my.email"
+        name = "newname"
+        set_data[ConstantKeys.P2P_ENDPOINT] = endpoint
+        set_data[ConstantKeys.WEBSITE] = website
+        set_data[ConstantKeys.DETAILS] = details
+        set_data[ConstantKeys.EMAIL] = email
+        set_data[ConstantKeys.NAME] = name
+        del set_data[ConstantKeys.PUBLIC_KEY]
+        tx = self.create_set_prep_tx(account, set_data=set_data)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-        # delegate
-        # set delegation
-        origin_delegations_list: list = []
-        expected_delegation_values: dict = {}
-        for i, wallet in enumerate(iconists):
-            origin_delegations: List[Tuple['Account', int]] = []
+        prep = self.get_prep(account)
+        for key in set_data:
+            self.assertEqual(set_data[key], prep[key])
 
-            delegation_value: int = stake_value
-            expected_delegation_values[i] = delegation_value
-            origin_delegations.append((preps[i], delegation_value))
+        # set irep on pre-vote
+        set_data2 = copy.deepcopy(set_data)
+        endpoint = "127.0.0.2:9000"
+        website = "https://website.example2.com"
+        details = "https://website.example2.com/details.json"
+        email = "myemail@my2.email"
+        name = "newname2"
+        set_data2[ConstantKeys.P2P_ENDPOINT] = endpoint
+        set_data2[ConstantKeys.WEBSITE] = website
+        set_data2[ConstantKeys.DETAILS] = details
+        set_data2[ConstantKeys.EMAIL] = email
+        set_data2[ConstantKeys.NAME] = name
+        tx = self.create_set_prep_tx(account, irep=45_000*ICX_FACTOR, set_data=set_data2)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 0)
+            account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-            origin_delegations_list.append(origin_delegations)
-        self.set_delegation(iconists, origin_delegations_list)
+        prep = self.get_prep(account)
+        for key in set_data:
+            self.assertEqual(set_data[key], prep[key])
 
-        # get delegation
-        for i, wallet in enumerate(iconists):
-            expected_total_delegation: int = 0
-            for delegation in origin_delegations_list[i]:
-                expected_total_delegation += delegation[1]
-            expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations_list[i])
-            expected_voting_power: int = stake_value - expected_total_delegation
-            expected_result: dict = {
-                "delegations": expected_delegations,
-                "totalDelegated": hex(expected_total_delegation),
-                "votingPower": hex(expected_voting_power)
-            }
-            response: dict = self.get_delegation(wallet)
-            self.assertEqual(expected_result, response)
+        tx_list = []
+        for i, account in enumerate(accounts):
+            tx = self.create_unregister_prep_tx(account)
+            tx_list.append(tx)
 
-        # get preps and check total_delegated
-        total_delegated = int(self.get_prep_list()['totalDelegated'], 16)
-        self.assertEqual(initial_total_delegated + 10 * len(preps), total_delegated)
+        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
 
-        # refund icx
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
         self.refund_icx(accounts)
