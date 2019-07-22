@@ -214,5 +214,9 @@ class TestIScore(Base):
         actual_balance: int = self.get_balance(accounts[0])
         self.assertEqual(expected_balance, actual_balance)
 
+        # queryIScore
+        response: dict = self.query_iscore(accounts[0])
+        self.assertEqual(hex(iscore1 + iscore2 - expected_claimed_iscore), response['iscore'])
+
         # refund icx
         self.refund_icx(accounts)
