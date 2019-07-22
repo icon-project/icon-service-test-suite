@@ -613,13 +613,13 @@ class Base(IconIntegrateTestBase):
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def refund_icx(self, accounts: List['Account']):
-        origin_delegations_list: list = [[]] * len(accounts)
-        self.set_delegation(accounts, origin_delegations_list)
-
         new_accounts: List['Account'] = []
         for account in accounts:
             if self.get_balance(account) > 0:
                 new_accounts.append(account)
+
+        origin_delegations_list: list = [[]] * len(new_accounts)
+        self.set_delegation(accounts, origin_delegations_list)
 
         # getStake
         stake_list: list = []
@@ -635,6 +635,9 @@ class Base(IconIntegrateTestBase):
         prev_block: int = self._get_block_height()
         max_expired_block_height: int = self.config[ISConfigKey.IISS_META_DATA][ISConfigKey.UN_STAKE_LOCK_MAX]
         self._make_blocks(prev_block + max_expired_block_height + 1)
+
+        for i, account in enumerate(new_accounts):
+            account.balance += stake_list[i]
 
         # get balance
         for account in new_accounts:
