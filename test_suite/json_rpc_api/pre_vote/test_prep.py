@@ -1,114 +1,99 @@
-from iconsdk.wallet.wallet import KeyWallet
+from typing import List, Tuple, Dict, TYPE_CHECKING
 
-from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX
+from test_suite.json_rpc_api.base import Base, ICX_FACTOR, PREP_REGISTER_COST_ICX, TestAccount
+
+if TYPE_CHECKING:
+    from iconsdk.signed_transaction import SignedTransaction
 
 
 class TestPRep(Base):
 
     def test_1_register_one_prep_invalid_case1(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
-        wallet = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1,
-                                         wallet.get_address(),
-                                         init_balance)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
-        params = {
-            "name": "banana node",
-            "email": "banana@banana.com",
-            "website": "https://banana.com",
-            "details": "http://banana.com/detail",
-            "publicKey": f"0x{wallet.bytes_public_key.hex()}"
-        }
-        tx = self.create_register_prep_tx(wallet, params)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(False, tx_result['status'])
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        account = accounts[0]
 
-        response = self.get_prep(wallet)
-        self.assertTrue(response['message'].startswith('P-Rep not found'))
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        # register prep with unfilled data
+        register_data = self._create_register_prep_params(account)
+        del register_data['p2pEndpoint']
+        tx: 'SignedTransaction' = self.create_register_prep_tx(account, register_data)
+        tx_hashes: list = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(False, tx_result['status'])
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+        get_prep_response = self.get_prep(account)
+        self.assertTrue(get_prep_response['message'].startswith('P-Rep not found'))
+
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_2_register_one_prep_invalid_case2(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
-        wallet = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1,
-                                         wallet.get_address(),
-                                         init_balance)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
-        params = {
-            "name": "banana node",
-            "email": "banana@banana.com",
-            "website": "https://banana.com",
-            "details": "http://banana.com/detail",
-            "p2pEndpoint": "123.213.123.123:7100"
-        }
-        tx = self.create_register_prep_tx(wallet, params)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(False, tx_result['status'])
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        account = accounts[0]
 
-        response = self.get_prep(wallet)
-        self.assertTrue(response['message'].startswith('P-Rep not found'))
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        # register prep with unfilled data
+        register_data = self._create_register_prep_params(account)
+        register_data['name'] = ' '
+        tx: 'SignedTransaction' = self.create_register_prep_tx(account, register_data)
+        tx_hashes: list = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(False, tx_result['status'])
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+
+        get_prep_response = self.get_prep(account)
+        self.assertTrue(get_prep_response['message'].startswith('P-Rep not found'))
+
+        # refund icx
+        self.refund_icx(accounts)
 
     def test_3_register_one_prep(self):
         init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
-        wallet = KeyWallet.create()
-        tx = self.create_transfer_icx_tx(self._test1,
-                                         wallet.get_address(),
-                                         init_balance)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
-        params = {
-            "name": "banana node",
-            "email": "banana@banana.com",
-            "website": "https://banana.com",
-            "details": "http://banana.com/detail",
-            "publicKey": f"0x{wallet.bytes_public_key.hex()}",
-            "p2pEndpoint": "123.213.123.123:7100"
-        }
-        tx = self.create_register_prep_tx(wallet, params)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        account = accounts[0]
 
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        self.register_prep(accounts)
         # set prep on pre-voting
-        params1 = {
+        set_prep_data = {
             "name": "apple node",
             "email": "apple@banana.com",
             "website": "https://apple.com",
             "details": "http://banana.com/detail",
             "p2pEndpoint": "123.213.123.123:7100"
         }
-        tx = self.create_set_prep_tx(wallet, set_data=params1)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        tx = self.create_set_prep_tx(account, set_data=set_prep_data)
+        tx_hashes: List['SignedTransaction'] = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(True, tx_result['status'])
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-        response = self.get_prep(wallet)
-        prep_data = response['registration']
-        self.assertEqual(prep_data['name'], params1['name'])
-        self.assertEqual(prep_data['email'], params1['email'])
-        self.assertEqual(prep_data['website'], params1['website'])
-        self.assertEqual(prep_data['details'], params1['details'])
-        self.assertEqual(prep_data['p2pEndpoint'], params1['p2pEndpoint'])
+        prep_data = self.get_prep(account)
+        self.assertEqual(prep_data['name'], set_prep_data['name'])
+        self.assertEqual(prep_data['email'], set_prep_data['email'])
+        self.assertEqual(prep_data['website'], set_prep_data['website'])
+        self.assertEqual(prep_data['details'], set_prep_data['details'])
+        self.assertEqual(prep_data['p2pEndpoint'], set_prep_data['p2pEndpoint'])
 
         # set irep on pre-voting
         irep = 40000
@@ -119,90 +104,76 @@ class TestPRep(Base):
             "details": "http://banana.com/detail",
             "p2pEndpoint": "123.213.123.123:7100",
         }
-        tx = self.create_set_prep_tx(wallet, irep, params)
+        tx = self.create_set_prep_tx(account, irep, params)
         tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(False, tx_result['status'])
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-        response = self.get_prep(wallet)
-        prep_data = response['registration']
-        self.assertEqual(prep_data['name'], params1['name'])
-        self.assertEqual(prep_data['email'], params1['email'])
-        self.assertEqual(prep_data['website'], params1['website'])
-        self.assertEqual(prep_data['details'], params1['details'])
-        self.assertEqual(prep_data['p2pEndpoint'], params1['p2pEndpoint'])
+        prep_data = self.get_prep(account)
+        self.assertEqual(prep_data['name'], set_prep_data['name'])
+        self.assertEqual(prep_data['email'], set_prep_data['email'])
+        self.assertEqual(prep_data['website'], set_prep_data['website'])
+        self.assertEqual(prep_data['details'], set_prep_data['details'])
+        self.assertEqual(prep_data['p2pEndpoint'], set_prep_data['p2pEndpoint'])
         self.assertNotEqual(prep_data['irep'], hex(irep))
 
+        # refund icx
+        self.refund_icx(accounts)
+
     def test_4_register_100_preps_and_check_total_delegated(self):
-        init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
-        wallets = [KeyWallet.create() for _ in range(100)]
-        tx_list = self.distribute_icx(self._test1,
-                                      wallets,
-                                      init_balance)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
+        init_balance: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
+        account_count: int = 110
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        preps: List['TestAccount'] = accounts[:100]
+        iconists: List['TestAccount'] = accounts[100:]
+        stake_value: int = 100
 
-        tx_list = []
-        for i, wallet in enumerate(wallets):
-            params = {
-                "name": f"banana node{i}",
-                "email": f"banana@banana{i}.com",
-                "website": f"https://banana{i}.com",
-                "details": f"http://banana.com/detail{i}",
-                "publicKey": f"0x{wallet.bytes_public_key.hex()}",
-                "p2pEndpoint": f"3.213.123.123:71{i}"
-            }
-            tx = self.create_register_prep_tx(wallets[i], params)
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
+        initial_total_delegated: int = int(self.get_prep_list()['totalDelegated'], 16)
 
-        # check total delegated
-        # distribute icx
-        delegators = [KeyWallet.create() for _ in range(10)]
-        tx_list = self.distribute_icx(self._test1, delegators, init_balance)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        # register preps
+        self.register_prep(accounts)
 
         # stake
-        tx_list = []
-        for index, key_wallet in enumerate(delegators):
-            tx = self.create_set_stake_tx(key_wallet, 1 * ICX_FACTOR)
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
+        self.set_stake(iconists, stake_value)
 
         # delegate
-        delegate_info_list = []
-        delegate_amount = [100 - i for i in range(100)]
-        for index, key_wallet in enumerate(wallets):
-            delegate_info = (key_wallet, 100-index)
-            delegate_info_list.append(delegate_info)
+        # set delegation
+        origin_delegations_list: list = []
+        expected_delegation_values: dict = {}
+        for i, wallet in enumerate(iconists):
+            origin_delegations: List[Tuple['TestAccount', int]] = []
 
-        tx_list = []
-        for index, key_wallet in enumerate(delegators):
-            tx = self.create_set_delegation_tx(key_wallet,
-                                               delegate_info_list[index * 10: index * 10 + 10])
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
+            delegation_value: int = stake_value
+            expected_delegation_values[i] = delegation_value
+            origin_delegations.append((preps[i], delegation_value))
 
-        # check total Delegated 50 to 70
-        response_50_to_70 = self.get_prep_list(50, 70)
+            origin_delegations_list.append(origin_delegations)
+        self.set_delegation(iconists, origin_delegations_list)
+
+        # get delegation
+        for i, wallet in enumerate(iconists):
+            expected_total_delegation: int = 0
+            for delegation in origin_delegations_list[i]:
+                expected_total_delegation += delegation[1]
+            expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations_list[i])
+            expected_voting_power: int = stake_value - expected_total_delegation
+            expected_result: dict = {
+                "delegations": expected_delegations,
+                "totalDelegated": hex(expected_total_delegation),
+                "votingPower": hex(expected_voting_power)
+            }
+            response: dict = self.get_delegation(wallet)
+            self.assertEqual(expected_result, response)
+
+        # get preps and check total_delegated
+        total_delegated = int(self.get_prep_list()['totalDelegated'], 16)
+        self.assertEqual(initial_total_delegated + 10 * len(preps), total_delegated)
+
+        # refund icx
+        self.refund_icx(accounts)

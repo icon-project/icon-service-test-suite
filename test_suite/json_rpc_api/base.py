@@ -546,6 +546,21 @@ class Base(IconIntegrateTestBase):
         return self.icon_service_for_debug.estimate_step(tx)
 
     # ============================================================= #
+    def claim_iscore(self, accounts: List["TestAccount"]):
+        tx_list: list = []
+        for account in accounts:
+            tx: 'SignedTransaction' = self.create_claim_iscore_tx(account)
+            tx_list.append(tx)
+
+        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, account in enumerate(accounts):
+            self.assertEqual(True, tx_results[i]['status'])
+            claimed_icx: str = tx_results[i]['eventLogs'][0]["data"][1]
+            account.balance += int(claimed_icx, 16)
+            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+
     def distribute_icx(self, accounts: List['TestAccount'], init_balance: int):
         admin: 'TestAccount' = self.load_admin()
         tx_list = []
@@ -556,9 +571,9 @@ class Base(IconIntegrateTestBase):
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
-            accounts[i].balance += init_balance
+        for i, account in enumerate(accounts):
+            self.assertEqual(True, tx_results[i]['status'])
+            account.balance += init_balance
 
     def set_stake(self, accounts: List['TestAccount'], stake_value: int):
         tx_list: list = []
@@ -568,9 +583,9 @@ class Base(IconIntegrateTestBase):
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        for i, account in enumerate(accounts):
+            self.assertEqual(True, tx_results[i]['status'])
+            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def set_delegation(self, accounts: List['TestAccount'], origin_delegations_list: list):
         tx_list: list = []
@@ -580,9 +595,9 @@ class Base(IconIntegrateTestBase):
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        for i, account in enumerate(accounts):
+            self.assertEqual(True, tx_results[i]['status'])
+            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def register_prep(self, accounts: List['TestAccount']):
         tx_list: list = []
@@ -592,16 +607,25 @@ class Base(IconIntegrateTestBase):
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
-            accounts[i].balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        for i, account in enumerate(accounts):
+            self.assertEqual(True, tx_results[i]['status'])
+            account.balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
+            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def refund_icx(self, accounts: List['TestAccount']):
+        origin_delegations_list: list = [[]] * len(accounts)
+        self.set_delegation(accounts, origin_delegations_list)
+
         new_accounts: List['TestAccount'] = []
         for account in accounts:
             if self.get_balance(account) > 0:
                 new_accounts.append(account)
+
+        # getStake
+        stake_list: list = []
+        for account in new_accounts:
+            response: dict = self.get_stake(account)
+            stake_list.append(int(response["stake"], 16))
 
         # set stake users 0% again
         stake_value: int = 0
