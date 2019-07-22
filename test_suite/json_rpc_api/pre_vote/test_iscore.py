@@ -203,12 +203,12 @@ class TestIScore(Base):
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        expected_claimed_icx = (iscore1 + iscore2) % 1000
+        expected_claimed_icx = (iscore1 + iscore2) // 1000
         expected_claimed_iscore = expected_claimed_icx * 1000
-        for tx_result in tx_results:
-            self.assertEqual('IScoreClaimed(int,int)', tx_result['eventLogs'][0]["indexed"][0])
-            self.assertEqual(hex(expected_claimed_iscore), tx_result['eventLogs'][0]["data"][0])
-            self.assertEqual(hex(expected_claimed_icx), tx_result['eventLogs'][0]["data"][1])
+
+        self.assertEqual('IScoreClaimed(int,int)', tx_results[0]['eventLogs'][0]["indexed"][0])
+        self.assertEqual(hex(expected_claimed_iscore), tx_results[0]['eventLogs'][0]["data"][0])
+        self.assertEqual(hex(expected_claimed_icx), tx_results[0]['eventLogs'][0]["data"][1])
 
         expected_balance: int = account_1_balance_before_claim + expected_claimed_icx - estimate_fee
         actual_balance: int = self.get_balance(accounts[0])
