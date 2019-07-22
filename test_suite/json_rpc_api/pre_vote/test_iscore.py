@@ -204,7 +204,7 @@ class TestIScore(Base):
         self.process_confirm_block_tx(self.icon_service)
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         expected_claimed_icx = (iscore1 + iscore2) % 1000
-        expected_claimed_iscore = expected_claimed_icx * 100
+        expected_claimed_iscore = expected_claimed_icx * 1000
         for tx_result in tx_results:
             self.assertEqual('IScoreClaimed(int,int)', tx_result['eventLogs'][0]["indexed"][0])
             self.assertEqual(hex(expected_claimed_iscore), tx_result['eventLogs'][0]["data"][0])
