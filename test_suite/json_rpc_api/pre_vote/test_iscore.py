@@ -133,7 +133,6 @@ class TestIScore(Base):
 
         # setStake
         self.set_stake(accounts[:1], stake_value)
-        accounts[0].balance -= stake_value
 
         # getStake
         response: dict = self.get_stake(accounts[0])
@@ -215,7 +214,7 @@ class TestIScore(Base):
         accounts[0].balance += int(claimed_icx, 16)
         accounts[0].balance -= tx_results[0]['stepUsed'] * tx_results[0]['stepPrice']
 
-        expected_balance: int = account_1_balance_before_claim + expected_claimed_icx - estimate_fee
+        expected_balance: int = account_1_balance_before_claim + expected_claimed_icx - estimate_fee - stake_value
         actual_balance: int = self.get_balance(accounts[0])
         self.assertEqual(expected_balance, actual_balance)
 

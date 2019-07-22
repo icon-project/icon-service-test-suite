@@ -619,13 +619,7 @@ class Base(IconIntegrateTestBase):
                 new_accounts.append(account)
 
         origin_delegations_list: list = [[]] * len(new_accounts)
-        self.set_delegation(accounts, origin_delegations_list)
-
-        # getStake
-        stake_list: list = []
-        for account in new_accounts:
-            response: dict = self.get_stake(account)
-            stake_list.append(int(response["stake"], 16))
+        self.set_delegation(new_accounts, origin_delegations_list)
 
         # set stake users 0% again
         stake_value: int = 0
@@ -635,9 +629,6 @@ class Base(IconIntegrateTestBase):
         prev_block: int = self._get_block_height()
         max_expired_block_height: int = self.config[ISConfigKey.IISS_META_DATA][ISConfigKey.UN_STAKE_LOCK_MAX]
         self._make_blocks(prev_block + max_expired_block_height + 1)
-
-        for i, account in enumerate(new_accounts):
-            account.balance += stake_list[i]
 
         # get balance
         for account in new_accounts:

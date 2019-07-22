@@ -346,7 +346,7 @@ class TestStake(Base):
     def test_stake4(self):
         init_balance: int = 10 * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # gain 10 icx
