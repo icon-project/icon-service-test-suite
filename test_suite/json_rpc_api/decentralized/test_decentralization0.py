@@ -1,76 +1,40 @@
-from typing import TYPE_CHECKING
+from typing import List
 
-from iconsdk.signed_transaction import SignedTransaction
 from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
 
-from test_suite.json_rpc_api.base import Base
-
-if TYPE_CHECKING:
-    pass
+from test_suite.json_rpc_api.base import Base, PREP_REGISTER_COST_ICX, ICX_FACTOR, Account
 
 
 class TestDecentralization(Base):
     def test_func(self):
+        builtin_owner = Account(self._test1)
+        prep_register_cost: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
+        account_count: int = PREP_MAIN_PREPS * 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+        main_preps: List['Account'] = accounts[:PREP_MAIN_PREPS]
+        iconists: List['Account'] = accounts[PREP_MAIN_PREPS:]
         total_supply: int = self.icon_service.get_total_supply()
 
         # Minimum_delegate_amount is 0.02 * total_supply
-        # In this test delegate 0.03*total_supply because `Issue transaction` exists since REV_IISS
-        minimum_delegate_amount_for_decentralization: int = total_supply * 2 // 1000 + 1
-        init_balance: int = minimum_delegate_amount_for_decentralization * 10
+        minimum_delegate_amount_for_decentralization: int = total_supply * 2 // 1000
+        init_balance: int = minimum_delegate_amount_for_decentralization + ICX_FACTOR
 
         # distribute icx PREP_MAIN_PREPS ~ PREP_MAIN_PREPS + PREP_MAIN_PREPS - 1
-        tx_list: list = []
-        for i in range(PREP_MAIN_PREPS):
-            tx: dict = self.create_transfer_icx_tx(self._test1,
-                                                   self._wallet_array[PREP_MAIN_PREPS + i],
-                                                   init_balance)
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
+        self.distribute_icx(iconists, init_balance)
 
         # stake PREP_MAIN_PREPS ~ PREP_MAIN_PREPS + PREP_MAIN_PREPS - 1
-        stake_amount: int = minimum_delegate_amount_for_decentralization
-        tx_list: list = []
-        for i in range(PREP_MAIN_PREPS):
-            tx: dict = self.create_set_stake_tx(self._wallet_array[PREP_MAIN_PREPS + i],
-                                                stake_amount)
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
+        self.set_stake(iconists, minimum_delegate_amount_for_decentralization)
 
+        # distribute 2010icx 0 ~ PREP_MAIN_PREPS - 1
+        self.distribute_icx(main_preps, prep_register_cost)
         # register PRep
-        tx_list: list = []
-        for address in self._wallet_array[:PREP_MAIN_PREPS]:
-            tx: dict = self.create_register_prep_tx(address)
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
+        self.register_prep(main_preps)
 
         # delegate to PRep
-        tx_list: list = []
-        for i in range(PREP_MAIN_PREPS):
-            tx: dict = self.create_set_delegation_tx(self._wallet_array[PREP_MAIN_PREPS + i],
-                                                     [
-                                                         (
-                                                             self._wallet_array[i],
-                                                             minimum_delegate_amount_for_decentralization
-                                                         )
-                                                     ])
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
+        delegations = []
+        for i, account in enumerate(iconists):
+            delegations.append([(main_preps[i], minimum_delegate_amount_for_decentralization)])
+        self.set_delegation(iconists, delegations)
 
         # get main prep
         response: dict = self.get_main_prep_list()
@@ -81,20 +45,20 @@ class TestDecentralization(Base):
         self.assertEqual(expected_response, response)
 
         # set Revision REV_IISS (decentralization)
-        tx: 'SignedTransaction' = self.create_set_revision_tx(self._test1, REV_DECENTRALIZATION)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
+        tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(True, tx_result['status'])
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for tx_result in tx_results:
+            self.assertEqual(tx_result['status'], 1)
 
         # get main prep
         response: dict = self.get_main_prep_list()
         expected_preps: list = []
         expected_total_delegated: int = 0
-        for wallet in self._wallet_array[:PREP_MAIN_PREPS]:
+        for prep in main_preps:
             expected_preps.append({
-                'address': wallet.get_address(),
+                'address': prep.wallet.address,
                 'delegated': hex(minimum_delegate_amount_for_decentralization)
             })
             expected_total_delegated += minimum_delegate_amount_for_decentralization
@@ -105,24 +69,17 @@ class TestDecentralization(Base):
         self.assertEqual(expected_response, response)
 
         # delegate to PRep 0
-        tx_list: list = []
-        for i in range(PREP_MAIN_PREPS):
-            tx: dict = self.create_set_delegation_tx(self._wallet_array[PREP_MAIN_PREPS + i], [])
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
-            self.assertEqual(True, tx_result['status'])
-
+        for i, account in enumerate(iconists):
+            delegations = [[(main_preps[i], 0)]]
+            self.set_delegation([account], delegations)
         self._make_blocks_to_end_calculation()
 
         # get main prep
         response: dict = self.get_main_prep_list()
         expected_preps: list = []
-        for wallet in self._wallet_array[:PREP_MAIN_PREPS]:
+        for main_prep in main_preps:
             expected_preps.append({
-                'address': wallet.get_address(),
+                'address': main_prep.wallet.address,
                 'delegated': hex(0)
             })
         expected_response: dict = {
@@ -130,3 +87,5 @@ class TestDecentralization(Base):
             "totalDelegated": hex(0)
         }
         self.assertEqual(expected_response, response)
+
+        self.refund_icx(accounts)

@@ -1,119 +1,97 @@
 import os
+from typing import List
 
-from iconsdk.wallet.wallet import KeyWallet
-from iconservice.icon_constant import REV_DECENTRALIZATION
+from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
 
-from test_suite.json_rpc_api.base import ICX_FACTOR
-from test_suite.json_rpc_api.decentralized.decentralizationBase import DecentralizationBase
+from test_suite.json_rpc_api.base import ICX_FACTOR, Account, PREP_REGISTER_COST_ICX, Base
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
-class TestDecentralization1(DecentralizationBase):
+class TestDecentralization1(Base):
 
     def test_1_decentralization(self):
-        wallet_array = [KeyWallet.create() for _ in range(40)]
-        # distribute icx
-        iconists = wallet_array[-3:]
-        preps = wallet_array[:30]
-        total_supply = self.icon_service.get_total_supply()
+        builtin_owner = Account(self._test1)
+        prep_register_cost: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
+        account_count: int = PREP_MAIN_PREPS * 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+        main_preps: List['Account'] = accounts[:PREP_MAIN_PREPS]
+        iconists: List['Account'] = accounts[PREP_MAIN_PREPS:]
+        total_supply: int = self.icon_service.get_total_supply()
 
-        minimum_delegate_amount = total_supply * 3 // 1000
-        distribute_icx_tx_results1 = self.distribute_icx(self._test1, iconists, int(minimum_delegate_amount * 11.5))
-        for tx_result in distribute_icx_tx_results1:
-            self.assertEqual(tx_result['status'], 1)
-        distribute_icx_tx_results2 = self.distribute_icx(self._test1, preps, 2010*ICX_FACTOR)
-        for tx_result in distribute_icx_tx_results2:
-            self.assertEqual(tx_result['status'], 1)
+        # Minimum_delegate_amount is 0.02 * total_supply
+        minimum_delegate_amount_for_decentralization: int = total_supply * 2 // 1000
+        init_balance: int = minimum_delegate_amount_for_decentralization + ICX_FACTOR
 
-        # stake
-        tx_results = self.stake_bulk(iconists, minimum_delegate_amount*11)
+        # distribute icx PREP_MAIN_PREPS ~ PREP_MAIN_PREPS + PREP_MAIN_PREPS - 1
+        self.distribute_icx(iconists, init_balance)
+
+        # stake PREP_MAIN_PREPS ~ PREP_MAIN_PREPS + PREP_MAIN_PREPS - 1
+        self.set_stake(iconists, minimum_delegate_amount_for_decentralization)
+
+        # delegate to PRep
+        delegations = []
+        for i, account in enumerate(iconists):
+            delegations.append([(main_preps[i], minimum_delegate_amount_for_decentralization)])
+        self.set_delegation(iconists, delegations)
+
+        # distribute 2010icx 0 ~ PREP_MAIN_PREPS - 1
+        self.distribute_icx(main_preps, prep_register_cost)
+
+        # register PRep
+        self.register_prep(main_preps)
+
+        # get main prep
+        response: dict = self.get_main_prep_list()
+        expected_response: dict = {
+            "preps": [],
+            "totalDelegated": hex(0)
+        }
+        self.assertEqual(expected_response, response)
+
+        # set Revision REV_IISS (decentralization)
+        tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
             self.assertEqual(tx_result['status'], 1)
 
-        # delegate
-        delegate_tx_result1 = self.delegate(iconists[0], preps[:10], minimum_delegate_amount + 100, -1)
-        delegate_tx_result2 = self.delegate(iconists[1], preps[10:20], minimum_delegate_amount + 50, -1)
-        delegate_tx_result3 = self.delegate(iconists[2], preps[20:], minimum_delegate_amount + 10, -1)
-        self.assertEqual(delegate_tx_result1['status'], 1)
-        self.assertEqual(delegate_tx_result2['status'], 1)
-        self.assertEqual(delegate_tx_result3['status'], 1)
+        # get main prep
+        response: dict = self.get_main_prep_list()
+        expected_preps: list = []
+        expected_total_delegated: int = 0
+        for prep in main_preps:
+            expected_preps.append({
+                'address': prep.wallet.address,
+                'delegated': hex(minimum_delegate_amount_for_decentralization)
+            })
+            expected_total_delegated += minimum_delegate_amount_for_decentralization
+        expected_response: dict = {
+            "preps": expected_preps,
+            "totalDelegated": hex(expected_total_delegated)
+        }
+        self.assertEqual(expected_response, response)
 
-        # register preps
-        tx_results = self.register_prep_bulk(preps)
-        for tx_result in tx_results:
-            self.assertEqual(tx_result['status'], 1)
+        # delegate to PRep 0
+        for i, account in enumerate(iconists):
+            delegations = [[(main_preps[i], 0)]]
+            self.set_delegation([account], delegations)
+        self._make_blocks_to_end_calculation()
 
-        # set revision to REV_DECENTRALIZATION
-        set_revision_tx = self.create_set_revision_tx(self._test1, REV_DECENTRALIZATION)
-        tx_result = self.process_transaction(set_revision_tx, self.icon_service)
-        self.assertEqual(tx_result['status'], 1)
+        # get main prep
+        response: dict = self.get_main_prep_list()
+        expected_preps: list = []
+        for main_prep in main_preps:
+            expected_preps.append({
+                'address': main_prep.wallet.address,
+                'delegated': hex(0)
+            })
+        expected_response: dict = {
+            "preps": expected_preps,
+            "totalDelegated": hex(0)
+        }
+        self.assertEqual(expected_response, response)
 
-        response = self.get_main_prep_list()
-        self.assertTrue(response['preps'])
+        self.refund_icx(accounts)
 
-        # delegate revoke
-        revoke_tx1 = self.delegate(iconists[0], preps[:10], 0)
-        revoke_tx2 = self.delegate(iconists[1], preps[10:20], 0)
-        revoke_tx3 = self.delegate(iconists[2], preps[20:], 0)
-        self.assertEqual(revoke_tx1['status'], 1)
-        self.assertEqual(revoke_tx2['status'], 1)
-        self.assertEqual(revoke_tx3['status'], 1)
-
-        # network decentralized
-
-        # # normal account try to set prep
-        # params = {
-        #     "name": "apple node",
-        #     "email": "apple@banana.com",
-        #     "website": "https://apple.com",
-        #     "details": "detail",
-        #     "p2pEndPoint": "target://123.213.123.123:7100",
-        # }
-        # tx = self.create_set_prep_tx(iconists[0], set_data=params)
-        # tx_result = self.process_transaction(tx, self.icon_service)
-        # self.assertEqual(tx_result['status'], 0)
-        #
-        # # unregistered prep try to set prep
-        # tx = self.create_unregister_prep_tx(preps[3])
-        # tx_result = self.process_transaction(tx, self.icon_service)
-        # self.assertEqual(tx_result['status'], 1)
-        #
-        # params = {
-        #     "name": "apple node",
-        #     "email": "apple@banana.com",
-        #     "website": "https://apple.com",
-        #     "details": "detail",
-        #     "p2pEndPoint": "target://123.213.123.123:7100",
-        # }
-        #
-        # tx = self.create_set_prep_tx(preps[3], set_data=params)
-        # tx_result = self.process_transaction(tx, self.icon_service)
-        # self.assertEqual(tx_result['status'], 0)
-        #
-        # unregister_tx_list = [self.create_unregister_prep_tx(prep) for prep in preps[:3]]
-        # self.process_transaction_bulk(unregister_tx_list, self.icon_service)
-        # self._make_blocks_to_end_calculation()
-        #
-        # response = self.process_call(get_main_preps_request, self.icon_service)
-        # prep_info_list = response['preps']
-        # prep_list = list(map(lambda res: res['address'], prep_info_list))
-        #
-        # self.assertNotIn(preps[0].get_address(), prep_list)
-        # self.assertNotIn(preps[1].get_address(), prep_list)
-        # self.assertNotIn(preps[2].get_address(), prep_list)
-        # self.assertNotIn(preps[3].get_address(), prep_list)
-        # self.assertIn(preps[25].get_address(), prep_list)
-        # self.assertIn(preps[24].get_address(), prep_list)
-        # self.assertIn(preps[23].get_address(), prep_list)
-        # self.assertIn(preps[22].get_address(), prep_list)
-        #
-        # # set irep twice in term
-        # prep = preps[4]
-        # set_irep_tx = self.create_set_prep_tx(prep, IISS_INITIAL_IREP * 9 // 10)
-        # tx_result = self.process_transaction(set_irep_tx, self.icon_service)
-        # self.assertEqual(tx_result['status'], 1)
-        #
-        # set_irep_tx = self.create_set_prep_tx(prep, IISS_INITIAL_IREP * 9 // 10)
-        # tx_result = self.process_transaction(set_irep_tx, self.icon_service)
-        # self.assertEqual(tx_result['status'], 0)

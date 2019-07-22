@@ -1,20 +1,20 @@
 from typing import TYPE_CHECKING, List, Tuple, Dict
 
-from iconservice.icon_constant import ConfigKey, IISS_MAX_DELEGATIONS
+from iconservice.icon_constant import IISS_MAX_DELEGATIONS
 
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR
 
 if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
-    from test_suite.json_rpc_api.base import TestAccount
     from iconsdk.builder.transaction_builder import Transaction
+    from test_suite.json_rpc_api.base import Account
 
 
 class TestDelegation(Base):
     def test_delegate1(self):
         init_balance: int = 1000 * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create
@@ -36,7 +36,7 @@ class TestDelegation(Base):
     def test_delegate2(self):
         init_balance: int = 1000 * ICX_FACTOR
         account_count: int = 1
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # gain 1000 icx
@@ -48,7 +48,7 @@ class TestDelegation(Base):
 
         # setDelegation request will be failed due to duplicated addresses
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(IISS_MAX_DELEGATIONS):
             origin_delegations.append((accounts[0], stake_value))
         origin_delegations_list.append(origin_delegations)
@@ -81,7 +81,7 @@ class TestDelegation(Base):
     def test_delegate3(self):
         init_balance: int = 3000 * ICX_FACTOR
         account_count: int = 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 1
@@ -162,7 +162,7 @@ class TestDelegation(Base):
     def test_delegate4(self):
         init_balance: int = 3000 * ICX_FACTOR
         account_count: int = 2
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 1
@@ -243,7 +243,7 @@ class TestDelegation(Base):
     def test_delegate5(self):
         init_balance: int = 3000 * ICX_FACTOR
         account_count: int = 3
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 2
@@ -271,7 +271,7 @@ class TestDelegation(Base):
 
         # set delegation user0 to user0 ~ 1 each 50%
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
@@ -297,7 +297,7 @@ class TestDelegation(Base):
 
         # set delegation user0 to user1 ~ 2 each 50%
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
@@ -322,7 +322,7 @@ class TestDelegation(Base):
     def test_delegate6(self):
         init_balance: int = 3000 * ICX_FACTOR
         account_count: int = 40
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 39
@@ -350,7 +350,7 @@ class TestDelegation(Base):
 
         # set delegation user0 to user0 ~ 9 each 10%
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
@@ -376,7 +376,7 @@ class TestDelegation(Base):
 
         # set delegation user0 to user10 ~ 19 each 10%
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
@@ -405,7 +405,7 @@ class TestDelegation(Base):
         # set over delegation user0 to user20 ~ 29 + 1
         tx_list: list = []
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
@@ -442,7 +442,7 @@ class TestDelegation(Base):
 
         # set delegate all users 0loop
         origin_delegations_list: list = []
-        origin_delegations: List[Tuple['TestAccount', int]] = []
+        origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
@@ -467,7 +467,7 @@ class TestDelegation(Base):
     def test_delegate7(self):
         init_balance: int = 3000 * ICX_FACTOR
         account_count: int = 100
-        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        accounts: List['Account'] = self.create_accounts(account_count)
         init_block_height: int = self._get_block_height()
 
         # create user0 ~ 99
@@ -495,7 +495,7 @@ class TestDelegation(Base):
             expected_delegation_values[i] = 0
             total_delegation_value: int = (stake_value - i) // 2
             delegation_cnt: int = i % IISS_MAX_DELEGATIONS
-            origin_delegations: List[Tuple['TestAccount', int]] = []
+            origin_delegations: List[Tuple['Account', int]] = []
             for j in range(delegation_cnt):
                 delegation_value: int = total_delegation_value // delegation_cnt
                 expected_delegation_values[j] += delegation_value
