@@ -342,3 +342,101 @@ class TestStake(Base):
 
         # refund icx
         self.refund_icx(accounts)
+
+    def test_stake4(self):
+        init_balance: int = 10 * ICX_FACTOR
+        account_count: int = 1
+        accounts: List['TestAccount'] = self.create_accounts(account_count)
+        init_block_height: int = self._get_block_height()
+
+        # gain 10 icx
+        self.distribute_icx(accounts, init_balance)
+
+        # set stake
+        stake_value: int = 8 * ICX_FACTOR
+        self.set_stake(accounts, stake_value)
+
+        for account in accounts:
+            response: int = self.get_balance(account)
+            expected_result: int = account.balance - stake_value
+            self.assertEqual(expected_result, response)
+
+        # test scenario 1
+        total_stake: int = 8
+        for i in range(0, total_stake // 2):
+            # stake reset
+            self.set_stake(accounts, stake_value)
+
+            # delegation
+            delegation_value: int = stake_value - i * ICX_FACTOR
+            origin_delegations_list: list = [[(accounts[0], delegation_value)]]
+            self.set_delegation(accounts[:1], origin_delegations_list)
+
+            # stake
+            tx_list: list = []
+            for account in accounts:
+                tx: 'SignedTransaction' = self.create_set_stake_tx(account, i * ICX_FACTOR)
+                tx_list.append(tx)
+            tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+            self.process_confirm_block_tx(self.icon_service)
+            tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+            for i, account in enumerate(accounts):
+                self.assertEqual(False, tx_results[i]['status'])
+                account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+
+            for account in accounts:
+                voting_power: int = int(self.get_delegation(account)["votingPower"], 16)
+                self.assertFalse(voting_power < 0)
+
+        # test scenario 2
+        for i in range(total_stake // 2 + 1, total_stake + 1):
+            # stake reset
+            self.set_stake(accounts, stake_value)
+
+            # delegation
+            delegation_value: int = stake_value - i * ICX_FACTOR
+            origin_delegations_list: list = [[(accounts[0], delegation_value)]]
+            self.set_delegation(accounts[:1], origin_delegations_list)
+
+            # stake
+            self.set_stake(accounts, i * ICX_FACTOR)
+
+            for account in accounts:
+                voting_power: int = int(self.get_delegation(account)["votingPower"], 16)
+                self.assertFalse(voting_power < 0)
+
+        # test scenario 3
+        # stake reset
+        self.set_stake(accounts, stake_value)
+
+        # delegation
+        delegation_value: int = stake_value - 1
+        origin_delegations_list: list = [[(accounts[0], delegation_value)]]
+        self.set_delegation(accounts[:1], origin_delegations_list)
+
+        # unstake 1 loop
+        self.set_stake(accounts, stake_value - 1)
+
+        for account in accounts:
+            voting_power: int = int(self.get_delegation(account)["votingPower"], 16)
+            self.assertFalse(voting_power < 0)
+
+        # Fail
+        # unstake 2 loop
+        tx_list: list = []
+        for account in accounts:
+            tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value - 2)
+            tx_list.append(tx)
+        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        for i, account in enumerate(accounts):
+            self.assertEqual(False, tx_results[i]['status'])
+            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+
+        for account in accounts:
+            voting_power: int = int(self.get_delegation(account)["votingPower"], 16)
+            self.assertFalse(voting_power < 0)
+
+        # refund icx
+        self.refund_icx(accounts)

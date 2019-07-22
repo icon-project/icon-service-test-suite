@@ -28,7 +28,7 @@ class TestDelegation(Base):
         delegation_value: int = stake_value
         origin_delegations_list: list = [[(accounts[0], delegation_value)]]
         tx: 'Transaction' = self.create_set_delegation_tx_without_sign(accounts[0], origin_delegations_list[0])
-        estimate_step: int = self.estimate_step(tx)
+        self.estimate_step(tx)
 
         # refund icx
         self.refund_icx(accounts)
