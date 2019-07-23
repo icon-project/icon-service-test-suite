@@ -1,5 +1,4 @@
-from time import sleep
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, Tuple
 
 from iconsdk.wallet.wallet import KeyWallet
 from iconservice.base.type_converter_templates import ConstantKeys
@@ -80,20 +79,7 @@ class TestPRepScenario(Base):
 
         # 7-1 ICONist stake 100ICX
         print('start #7 ICONISt stake 100icx')
-        tx_list = []
-        fee_list = []
-        for account in _ICONIST:
-            tx = self.create_set_stake_tx(account, STAKE_VALUE)
-            tx_list.append(tx)
-        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
-        tx_results = self.get_txresults(self.icon_service, tx_hashes)
-
-        for i, tx_result in enumerate(tx_results):
-            fee = tx_result['stepUsed'] * tx_result['stepPrice']
-            _ICONIST[i].balance -= fee
-            fee_list.append(fee)
-
+        self.set_stake(_ICONIST, STAKE_VALUE)
         # 7-2 check balance and stake
         for i, account in enumerate(_ICONIST):
             balance = self.icon_service.get_balance(account.wallet.address)
@@ -140,7 +126,11 @@ class TestPRepScenario(Base):
             tx_list.append(tx)
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
-        # tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            _ICONIST[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         for index, account in enumerate(_PREPS[:len(_ICONIST)]):
             prep_info = self.get_prep(account)
@@ -158,7 +148,8 @@ class TestPRepScenario(Base):
         tx_hashes = self.process_transaction_bulk_without_txresult(delegate_tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+
+        for i, tx_result in enumerate(tx_results):
             _ICONIST[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         for index, account in enumerate(reversed(_SUB_PREPS)):
@@ -178,8 +169,9 @@ class TestPRepScenario(Base):
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
 
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 0)
+            _ICONIST[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         get_preps_response = self.get_prep_list()
         preps_info = get_preps_response['preps']
@@ -207,10 +199,9 @@ class TestPRepScenario(Base):
         tx_hashes = self.process_transaction_bulk_without_txresult(unregister_tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 1)
-        # preps = self.get_prep_list()
-        # self.assertEqual(len(preps['preps']), len(_PREPS) - 10)
+            _PREPS[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # 16 get preps 0-9 (changed. error not raised)
         # print('start #16')
@@ -224,11 +215,12 @@ class TestPRepScenario(Base):
         for i in range(10):
             tx = self.create_register_prep_tx(_PREPS[i])
             tx_list.append(tx)
-        tx_hashes = self.process_transaction_bulk(tx_list, self.icon_service)
+        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 0)
+            _PREPS[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # 18 set prep 0-9 preps
         print('start #18 set prep 0-9')
@@ -247,22 +239,25 @@ class TestPRepScenario(Base):
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 0)
+            _PREPS[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # 19 register preps 10-19 again
         print('start #19 register preps 10-19 again')
         tx_list = []
-        for i in range(10, 19):
+        for i in range(10, 20):
             tx = self.create_register_prep_tx(_PREPS[i])
             tx_list.append(tx)
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 0)
+            _PREPS[i+10].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # 20 query ICONist-9 i-score
+        self._make_blocks_to_end_calculation()
         self._make_blocks_to_end_calculation()
         print('start #20 query ICONIST9 iscore')
         response = self.query_iscore(_ICONIST[9])
@@ -271,9 +266,7 @@ class TestPRepScenario(Base):
 
         # 21 claim ICONist-9 i-score
         print('start #21 claim ICONIST9 iscore')
-        claim_tx = self.create_claim_iscore_tx(_ICONIST[9])
-        tx_result = self.process_transaction(claim_tx, self.icon_service)
-        self.assertEqual(tx_result['status'], 1)
+        self.claim_iscore([_ICONIST[9]])
 
         # 22 query ICONist-9 i-score
         print('start #22 query ICONIST9 iscore')
@@ -286,12 +279,22 @@ class TestPRepScenario(Base):
 
         # 24 self delegation
         print('start #24 prep99 set delegation 1000icx to PREP99')
-        stake_tx = self.create_set_stake_tx(_PREPS[99], 1000 * ICX_FACTOR)
-        self.process_transaction(stake_tx, self.icon_service)
-        delegate_tx = self.create_set_delegation_tx(_PREPS[99], [(_PREPS[99], 1000 * ICX_FACTOR)])
-        self.process_transaction(delegate_tx, self.icon_service)
+        tx_list = []
+        tx = self.create_set_stake_tx(_PREPS[99], 1000 * ICX_FACTOR)
+        tx_list.append(tx)
+        tx = self.create_set_delegation_tx(_PREPS[99], [(_PREPS[99], 1000 * ICX_FACTOR)])
+        tx_list.append(tx)
+        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            _PREPS[99].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         response = self.get_prep_list()
         preps_info = response['preps']
         self.assertEqual(preps_info[0]['address'], _PREPS[99].wallet.address)
+
+        print("# start refund")
+        self.refund_icx(self._wallet_array)
         # 25 reload
