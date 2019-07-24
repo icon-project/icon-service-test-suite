@@ -21,7 +21,7 @@ class TestPRep(Base):
         self.distribute_icx(accounts, init_balance)
 
         keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.PUBLIC_KEY, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
-                ConstantKeys.EMAIL, ConstantKeys.NAME]
+                ConstantKeys.EMAIL, ConstantKeys.NAME, ConstantKeys.CITY, ConstantKeys.COUNTRY]
         register_data = self._create_register_prep_params(account)
 
         # register prep with invalid data
@@ -258,4 +258,38 @@ class TestPRep(Base):
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 1)
             accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        self.refund_icx(accounts)
+
+    def test_4_register_prep_country(self):
+        init_balance: int = (PREP_REGISTER_COST_ICX + 1) * ICX_FACTOR
+        account_count: int = 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+
+        # create
+        self.distribute_icx(accounts, init_balance)
+
+        user0_register_data = self._create_register_prep_params(accounts[0])
+        user1_register_data = self._create_register_prep_params(accounts[1])
+
+        # user0 register with invalid country code and user1 register with valid country
+        user0_register_data[ConstantKeys.COUNTRY] = "ABC"
+        user1_register_data[ConstantKeys.COUNTRY] = "USA"
+        user_data = [user0_register_data, user1_register_data]
+        tx_list = []
+        for i, account in enumerate(accounts):
+            tx = self.create_register_prep_tx(account, user_data[i])
+            tx_list.append(tx)
+        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service)
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for i, tx_result in enumerate(tx_results):
+            self.assertEqual(tx_result['status'], 1)
+            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice'] + PREP_REGISTER_COST_ICX * ICX_FACTOR
+
+        prep0 = self.get_prep(accounts[0])
+        prep1 = self.get_prep(accounts[1])
+
+        self.assertEqual("ZZZ", prep0[ConstantKeys.COUNTRY])
+        self.assertEqual("USA", prep1[ConstantKeys.COUNTRY])
+
         self.refund_icx(accounts)
