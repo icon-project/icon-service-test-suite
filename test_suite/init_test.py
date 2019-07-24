@@ -36,7 +36,7 @@ class TestInit(Base):
 
         tx: 'SignedTransaction' = self.create_set_revision_tx(admin, REV_IISS)
         tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account([admin]))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
             self.assertEqual(True, tx_result['status'])
