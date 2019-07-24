@@ -289,7 +289,7 @@ class TestIScore(Base):
         tx: 'SignedTransaction' = self.create_claim_iscore_tx(accounts[0])
         tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         expected_claimed_icx = (iscore1 + iscore2) // 1000
         expected_claimed_iscore = expected_claimed_icx * 1000

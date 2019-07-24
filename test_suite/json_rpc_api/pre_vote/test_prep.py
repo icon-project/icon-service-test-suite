@@ -30,7 +30,7 @@ class TestPRep(Base):
             data[key] = ''
             tx = self.create_register_prep_tx(account, data)
             tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-            self.process_confirm_block_tx(self.icon_service)
+            self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
             tx_results = self.get_txresults(self.icon_service, tx_hashes)
             for i, tx_result in enumerate(tx_results):
                 self.assertEqual(tx_result['status'], 0)
@@ -42,7 +42,7 @@ class TestPRep(Base):
         # unregister prep
         tx = self.create_unregister_prep_tx(account)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
 
         for i, tx_result in enumerate(tx_results):
@@ -54,7 +54,7 @@ class TestPRep(Base):
 
         tx = self.create_register_prep_tx(account, register_data)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
@@ -135,7 +135,7 @@ class TestPRep(Base):
             tx = self.create_set_delegation_tx(accounts[i], [delegate])
             tx_list.append(tx)
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
 
         for i, tx_result in enumerate(tx_results):
@@ -162,7 +162,7 @@ class TestPRep(Base):
             tx_list.append(tx)
 
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
 
         for i, tx_result in enumerate(tx_results):
@@ -189,7 +189,7 @@ class TestPRep(Base):
             data[key] = ''
             tx = self.create_register_prep_tx(account, data)
             tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-            self.process_confirm_block_tx(self.icon_service)
+            self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
             tx_results = self.get_txresults(self.icon_service, tx_hashes)
             for i, tx_result in enumerate(tx_results):
                 self.assertEqual(tx_result['status'], 0)
@@ -212,7 +212,7 @@ class TestPRep(Base):
         del set_data[ConstantKeys.PUBLIC_KEY]
         tx = self.create_set_prep_tx(account, set_data=set_data)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 1)
@@ -236,7 +236,7 @@ class TestPRep(Base):
         set_data2[ConstantKeys.NAME] = name
         tx = self.create_set_prep_tx(account, irep=45_000*ICX_FACTOR, set_data=set_data2)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 0)
@@ -252,7 +252,7 @@ class TestPRep(Base):
             tx_list.append(tx)
 
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
 
         for i, tx_result in enumerate(tx_results):
@@ -280,7 +280,7 @@ class TestPRep(Base):
             tx = self.create_register_prep_tx(account, user_data[i])
             tx_list.append(tx)
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(tx_result['status'], 1)

@@ -80,7 +80,7 @@ class Base(IconIntegrateTestBase):
                                                          msg="test message")
                 self.process_confirm_block_tx(self.icon_service, 10.0)
                 block_height += 1
-        self.process_confirm_block_tx(self.icon_service, 30.0)
+        self.process_confirm_block_tx(self.icon_service, 50.0)
 
     def _make_blocks_to_end_calculation(self) -> int:
         iiss_info = self.get_iiss_info()
@@ -559,7 +559,7 @@ class Base(IconIntegrateTestBase):
             tx_list.append(tx)
 
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -575,7 +575,7 @@ class Base(IconIntegrateTestBase):
             tx_list.append(tx)
 
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -587,7 +587,7 @@ class Base(IconIntegrateTestBase):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -599,7 +599,7 @@ class Base(IconIntegrateTestBase):
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -611,7 +611,7 @@ class Base(IconIntegrateTestBase):
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -670,7 +670,7 @@ class Base(IconIntegrateTestBase):
             tx_list.append(tx)
 
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(True, tx_result['status'])
@@ -698,9 +698,9 @@ class Base(IconIntegrateTestBase):
                 sleep_time: float = 2.0
             sleep(sleep_time)
 
-
-def sleep_ratio_from_account(accounts: List["Account"]):
-    return min(max(1.0, len(accounts)), 50.0)
+    @staticmethod
+    def sleep_ratio_from_account(accounts: List["Account"]):
+        return min(max(1.0, len(accounts)), 50.0)
 
 
 class Account:

@@ -58,7 +58,7 @@ class TestDelegation(Base):
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(False, tx_result['status'])
@@ -413,7 +413,7 @@ class TestDelegation(Base):
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(False, tx_result['status'])

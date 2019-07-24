@@ -29,7 +29,7 @@ class TestDecentralization4(Base):
         # set Revision REV_IISS (decentralization)
         tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
             self.assertEqual(tx_result['status'], 1)

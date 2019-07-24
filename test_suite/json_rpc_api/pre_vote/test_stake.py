@@ -326,7 +326,7 @@ class TestStake(Base):
         stake_value: int = accounts[0].balance
         tx: 'SignedTransaction' = self.create_set_stake_tx(accounts[0], stake_value)
         tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(False, tx_results[i]['status'])
@@ -378,7 +378,7 @@ class TestStake(Base):
                 tx: 'SignedTransaction' = self.create_set_stake_tx(account, i * ICX_FACTOR)
                 tx_list.append(tx)
             tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-            self.process_confirm_block_tx(self.icon_service)
+            self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
             tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
             for i, account in enumerate(accounts):
                 self.assertEqual(False, tx_results[i]['status'])
@@ -428,7 +428,7 @@ class TestStake(Base):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value - 2)
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(False, tx_results[i]['status'])
