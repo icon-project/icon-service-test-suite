@@ -31,7 +31,7 @@ class TestIScore(Base):
         # iscore = delegation_amount * period * rrep / reward_divider
         return int(delegation * new_rrep * (ed - st) / reward_divider)
 
-    def test_iscore(self):
+    def test_iscore1(self):
         init_balance: int = 3000 * ICX_FACTOR
         stake_value: int = MIN_DELEGATION
         account_count: int = 2
@@ -116,6 +116,93 @@ class TestIScore(Base):
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore_after_claim + iscore3), response['iscore'])
         self.assertEqual(hex(calculate3_block_height), response['blockHeight'])
+
+        # refund icx
+        self.refund_icx(accounts)
+
+    def test_iscore2(self):
+        init_balance: int = 3000 * ICX_FACTOR
+        stake_value: int = 1 * ICX_FACTOR
+        account_count: int = 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register P-Rep
+        self.register_prep(accounts[1:])
+
+        # setStake
+        self.set_stake(accounts[:1], stake_value)
+
+        # getStake
+        response: dict = self.get_stake(accounts[0])
+        expect_result: dict = {
+            "stake": hex(stake_value),
+        }
+        self.assertEqual(expect_result, response)
+
+        # delegate to P-Rep
+        delegation_value: int = stake_value
+        origin_delegations: list = [[(accounts[1], delegation_value)]]
+        self.set_delegation(accounts[:1], origin_delegations)
+        delegation_block = self._get_block_height()
+
+        # query delegation
+        user_id: int = 0
+        expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations[user_id])
+        expect_result: dict = {
+            "delegations": expected_delegations,
+            "totalDelegated": hex(delegation_value),
+            "votingPower": hex(stake_value - delegation_value)
+        }
+        response: dict = self.get_delegation(accounts[user_id])
+        self.assertEqual(expect_result, response)
+
+        self._make_blocks_to_end_calculation()
+
+        for i in range(10):
+            self._make_blocks_to_end_calculation()
+            self.claim_iscore(accounts)
+
+        # refund icx
+        self.refund_icx(accounts)
+
+    def test_iscore3(self):
+        init_balance: int = 20000 * ICX_FACTOR
+        stake_value: int = 10000 * ICX_FACTOR
+        account_count: int = 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register P-Rep
+        self.register_prep(accounts[1:])
+
+        # setStake
+        self.set_stake(accounts[:1], stake_value)
+
+        # getStake
+        response: dict = self.get_stake(accounts[0])
+        expect_result: dict = {
+            "stake": hex(stake_value),
+        }
+        self.assertEqual(expect_result, response)
+
+        # delegate to P-Rep
+        delegation_value: int = 2000 * ICX_FACTOR
+        origin_delegations: list = []
+        for i, account in enumerate(accounts):
+            origin_delegations.append((account, delegation_value * (i+1)))
+        self.set_delegation(accounts[:1], [origin_delegations])
+
+        self._make_blocks_to_end_calculation()
+        self._make_blocks_to_end_calculation()
+
+        for i in range(10):
+            self._make_blocks_to_end_calculation()
+            self.claim_iscore(accounts)
+            response: dict = self.query_iscore(accounts[0])
+            self.assertTrue(int(response['iscore'], 16) < 1000)
 
         # refund icx
         self.refund_icx(accounts)
@@ -226,7 +313,7 @@ class TestIScore(Base):
         self.refund_icx(accounts)
 
     # TODO remove
-    # def test_iscore1(self):
+    # def test_iscore3(self):
     #     init_balance: int = 10_000 * ICX_FACTOR
     #     stake_value: int = 5_000 * ICX_FACTOR
     #     account_count: int = 2
@@ -290,7 +377,7 @@ class TestIScore(Base):
     #     # refund icx
     #     self.refund_icx(accounts)
     #
-    # def test_iscore2(self):
+    # def test_iscore4(self):
     #     init_balance: int = 10_000 * ICX_FACTOR
     #     stake_value: int = 5_000 * ICX_FACTOR
     #     account_count: int = 1

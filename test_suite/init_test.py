@@ -29,7 +29,7 @@ class TestInit(Base):
             score_path = os.path.abspath(os.path.join(DIR_PATH, f'./data/{score}.zip'))
             tx = self.create_deploy_score_tx(score_path, admin, GOVERNANCE_ADDRESS)
             tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-            self.process_confirm_block_tx(self.icon_service)
+            self.process_confirm_block_tx(self.icon_service, 50.0)
             tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
             for tx_result in tx_results:
                 self.assertEqual(True, tx_result['status'])

@@ -539,21 +539,21 @@
                 "address": "hx4491a4dfc2e71474d938ce77d37be0a8654efe73",
                 "balance": "0x21e19e0c9bab2400000"
             }
-        ]
+	]
     },
     "channel": "loopchain_default",
     "amqpKey": "7100",
     "amqpTarget": "127.0.0.1",
-    "blockConfirmInterval": 1,
+    "blockConfirmInterval": 2,
     "blockConfirmEmpty": false,
     "blockGeneratorRotation": true,
     "blockGenerateCountPerLeader": 10,
     "blockManualConfirm": true,
-    "networkDelayMs": 500,
+    "networkDelayMs": 10,
     "iissCalculatePeriod": 10,
     "termPeriod": 10,
     "iissMetaData": {
         "lockMin": 10,
-        "lockMax": 10
+        "lockMax": 12
     }
 }

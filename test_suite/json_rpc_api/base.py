@@ -1,4 +1,5 @@
 import os
+from time import sleep
 from typing import Dict, Union, List, Tuple, Optional
 
 from iconcommons import IconConfig
@@ -27,7 +28,6 @@ GOVERNANCE_ADDRESS = "cx0000000000000000000000000000000000000001"
 API_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/v3"
 DEBUG_HTTP_ENDPOINT_URI_V3 = "http://127.0.0.1:9000/api/debug/v3"
 
-
 PREP_REGISTER_COST_ICX = 2000
 ICX_FACTOR = 10 ** 18
 
@@ -49,6 +49,8 @@ class Base(IconIntegrateTestBase):
         else:
             block_confirm_interval: int = self.config[ConfigKey.BLOCK_CONFIRM_INTERVAL]
 
+        self._block_confirm_empty: bool = self.config[ConfigKey.BLOCK_CONFIRM_EMPTY]
+
         super().setUp(block_confirm_interval=block_confirm_interval,
                       network_only=True,
                       network_delay_ms=self.config[ConfigKey.NETWORK_DELAY_MS])
@@ -68,17 +70,21 @@ class Base(IconIntegrateTestBase):
         block_height = self._get_block_height()
 
         while to > block_height:
-            self.process_message_tx_without_txresult(self.icon_service,
-                                                     self._test1,
-                                                     self._genesis,
-                                                     msg="test message")
-            self.process_confirm_block_tx(self.icon_service)
-            block_height += 1
+            if self._block_confirm_empty:
+                sleep(self._block_confirm_interval / 2)
+                block_height: int = self._get_block_height()
+            else:
+                self.process_message_tx_without_txresult(self.icon_service,
+                                                         self._test1,
+                                                         self._genesis,
+                                                         msg="test message")
+                self.process_confirm_block_tx(self.icon_service, 10.0)
+                block_height += 1
+        self.process_confirm_block_tx(self.icon_service, 30.0)
 
     def _make_blocks_to_end_calculation(self) -> int:
         iiss_info = self.get_iiss_info()
         next_calculation = int(iiss_info.get('nextCalculation', 0), 16)
-
         self._make_blocks(to=next_calculation - 1)
 
         self.assertEqual(self._get_block_height(), next_calculation - 1)
@@ -530,7 +536,7 @@ class Base(IconIntegrateTestBase):
     def load_test_accounts(self) -> List['Account']:
         accounts: List['Account'] = []
         for wallet in self._wallet_array:
-            balance: int = self.get_balance(wallet)
+            balance: int = self.get_balance(wallet.get_address())
             accounts.append(Account(wallet, balance))
         return accounts
 
@@ -553,7 +559,7 @@ class Base(IconIntegrateTestBase):
             tx_list.append(tx)
 
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -569,7 +575,7 @@ class Base(IconIntegrateTestBase):
             tx_list.append(tx)
 
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -581,7 +587,7 @@ class Base(IconIntegrateTestBase):
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -593,7 +599,7 @@ class Base(IconIntegrateTestBase):
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -605,7 +611,7 @@ class Base(IconIntegrateTestBase):
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
             tx_list.append(tx)
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
             self.assertEqual(True, tx_results[i]['status'])
@@ -664,10 +670,37 @@ class Base(IconIntegrateTestBase):
             tx_list.append(tx)
 
         tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, tx_result in enumerate(tx_results):
             self.assertEqual(True, tx_result['status'])
+
+    def process_confirm_block_tx(self, network: IconService, sleep_ratio: float = 1.0):
+        if not self._block_confirm_empty:
+            # build message tx
+            transaction = TransactionBuilder() \
+                .from_(self._test1.get_address()) \
+                .to("hx0000000000000000000000000000000000000000") \
+                .value(0) \
+                .step_limit(10_000_000_000) \
+                .nonce(0) \
+                .build()
+
+            # signing message tx
+            request = SignedTransaction(transaction, self._test1)
+            network.send_transaction(request)
+
+        if self._block_confirm_interval > 0:
+            sleep(self._block_confirm_interval)
+        else:
+            sleep_time: float = self._network_delay * sleep_ratio
+            if sleep_time > 2.0:
+                sleep_time: float = 2.0
+            sleep(sleep_time)
+
+
+def sleep_ratio_from_account(accounts: List["Account"]):
+    return min(max(1.0, len(accounts)), 50.0)
 
 
 class Account:
