@@ -10,10 +10,10 @@ from test_suite.json_rpc_api.base import Base, ICX_FACTOR, Account
 class TestPRepScenario(Base):
     def test_scenario(self):
         test1_account = Account(self._test1)
-        self._wallet_array = [Account(KeyWallet.create()) for _ in range(212)]
-        _PREPS = self._wallet_array[:200]
-        _SUB_PREPS = self._wallet_array[:100]
-        _ICONIST = self._wallet_array[202:]
+        accounts = [Account(KeyWallet.create()) for _ in range(212)]
+        _PREPS = accounts[:200]
+        _SUB_PREPS = accounts[:100]
+        _ICONIST = accounts[202:]
         preps_init_balance_list = []
         DIVIDEND = 10_000 * ICX_FACTOR
         STAKE_VALUE = 100 * ICX_FACTOR
@@ -30,11 +30,11 @@ class TestPRepScenario(Base):
 
         # 2 transfer to PREPS and ICONists
         print('start #2 transfer to accounts')
-        self.distribute_icx(self._wallet_array, DIVIDEND)
+        self.distribute_icx(accounts, DIVIDEND)
 
         # 3 check balance of accounts
         print('start #3 check balance')
-        for account in self._wallet_array:
+        for account in accounts:
             balance = self.icon_service.get_balance(account.wallet.address)
             self.assertEqual(balance, DIVIDEND)
             preps_init_balance_list.append(balance)
@@ -92,7 +92,7 @@ class TestPRepScenario(Base):
         self._make_blocks_to_end_calculation()
 
         # 8-2 check I-Scores
-        for account in self._wallet_array:
+        for account in accounts:
             iscore_info = self.query_iscore(account)
             self.assertEqual(iscore_info['iscore'], hex(0))
 
@@ -160,7 +160,7 @@ class TestPRepScenario(Base):
         # 12 11 delegation
         print('start #12 11delegation')
         delegate_info: List[Tuple['Account', int]] = \
-            [(prep, ((index+10) // 10) * ICX_FACTOR) for index, prep in enumerate(self._wallet_array[100:201])]
+            [(prep, ((index+10) // 10) * ICX_FACTOR) for index, prep in enumerate(accounts[100:201])]
         delegate_tx_list = []
         for index, account in enumerate(_ICONIST):
             tx = self.create_set_delegation_tx(account, delegate_info[index*10:index*10+11])
@@ -296,5 +296,5 @@ class TestPRepScenario(Base):
         self.assertEqual(preps_info[0]['address'], _PREPS[99].wallet.address)
 
         print("# start refund")
-        self.refund_icx(self._wallet_array)
+        self.refund_icx(accounts)
         # 25 reload

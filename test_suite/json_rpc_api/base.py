@@ -284,6 +284,40 @@ class Base(IconIntegrateTestBase):
             build()
 
     @staticmethod
+    def create_set_governance_variables_tx(from_: 'Account',
+                                           irep: int = 0,
+                                           step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
+                                           nid: int = DEFAULT_NID,
+                                           nonce: int = 0) -> 'SignedTransaction':
+        transaction: 'Transaction' = Base.create_set_governance_variables_tx_without_sign(
+            from_,
+            irep,
+            step_limit,
+            0,
+            nid,
+            nonce)
+        signed_transaction = SignedTransaction(transaction, from_.wallet)
+        return signed_transaction
+
+    @staticmethod
+    def create_set_governance_variables_tx_without_sign(from_: 'Account',
+                                                        irep: int = 0,
+                                                        step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
+                                                        value: int = 0,
+                                                        nid: int = DEFAULT_NID,
+                                                        nonce: int = 0) -> 'SignedTransaction':
+        return CallTransactionBuilder().\
+            from_(from_.wallet.get_address()).\
+            to(SYSTEM_ADDRESS).\
+            value(value).\
+            step_limit(step_limit).\
+            nid(nid).\
+            nonce(nonce).\
+            method("setGovernanceVariables").\
+            params({"irep": hex(irep)}).\
+            build()
+
+    @staticmethod
     def create_set_stake_tx(from_: 'Account',
                             stake: int,
                             value: int = 0,
@@ -514,7 +548,7 @@ class Base(IconIntegrateTestBase):
 
         return {
             ConstantKeys.NAME: name,
-            ConstantKeys.COUNTRY: "ZZZ",
+            ConstantKeys.COUNTRY: "KOR",
             ConstantKeys.CITY: "Unknown",
             ConstantKeys.EMAIL: f"{name}@example.com",
             ConstantKeys.WEBSITE: f"https://{name}.example.com",
