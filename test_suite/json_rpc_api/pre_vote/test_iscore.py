@@ -1,3 +1,4 @@
+from time import sleep
 from typing import List, Dict, TYPE_CHECKING
 
 from iconservice.icon_constant import IISS_ANNUAL_BLOCK, ISCORE_EXCHANGE_RATE
@@ -10,10 +11,10 @@ if TYPE_CHECKING:
     from iconsdk.signed_transaction import SignedTransaction
     from ..base import Account
 
-MIN_DELEGATION = 788_400
 min_rrep = 200
 gv_divider = 10_000
 reward_divider = IISS_ANNUAL_BLOCK * gv_divider // ISCORE_EXCHANGE_RATE
+MIN_DELEGATION = int(IISS_ANNUAL_BLOCK / ISCORE_EXCHANGE_RATE * (gv_divider / min_rrep))
 
 
 class TestIScore(Base):
@@ -122,6 +123,62 @@ class TestIScore(Base):
 
     def test_iscore2(self):
         init_balance: int = 3000 * ICX_FACTOR
+        stake_value: int = MIN_DELEGATION
+        account_count: int = 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register P-Rep
+        self.register_prep(accounts[1:])
+
+        # setStake
+        self.set_stake(accounts[:1], stake_value)
+
+        # getStake
+        response: dict = self.get_stake(accounts[0])
+        expect_result: dict = {
+            "stake": hex(stake_value),
+        }
+        self.assertEqual(expect_result, response)
+
+        # delegate to P-Rep
+        delegation_value: int = stake_value
+        origin_delegations: list = [[(accounts[1], delegation_value)]]
+        self.set_delegation(accounts[:1], origin_delegations)
+
+        # query delegation
+        user_id: int = 0
+        expected_delegations: List[Dict[str, str]] = self.create_delegation_params(origin_delegations[user_id])
+        expect_result: dict = {
+            "delegations": expected_delegations,
+            "totalDelegated": hex(delegation_value),
+            "votingPower": hex(stake_value - delegation_value)
+        }
+        response: dict = self.get_delegation(accounts[user_id])
+        self.assertEqual(expect_result, response)
+
+        # queryIScore
+        response: dict = self.query_iscore(accounts[0])
+        self.assertEqual(hex(0), response['iscore'])
+        self._make_blocks_to_end_calculation()
+        response: dict = self.query_iscore(accounts[0])
+        self.assertEqual(hex(0), response['iscore'])
+
+        last_iscore: int = 0
+        for i in range(1):
+            self._make_blocks_to_end_calculation()
+            response: dict = self.query_iscore(accounts[0])
+            iscore: int = int(response['iscore'], 16)
+            self.assertNotEqual(0, iscore)
+            self.assertNotEqual(last_iscore, iscore)
+            last_iscore: int = iscore
+
+        # refund icx
+        self.refund_icx(accounts)
+
+    def test_iscore3(self):
+        init_balance: int = 3000 * ICX_FACTOR
         stake_value: int = 1 * ICX_FACTOR
         account_count: int = 2
         accounts: List['Account'] = self.create_accounts(account_count)
@@ -167,7 +224,7 @@ class TestIScore(Base):
         # refund icx
         self.refund_icx(accounts)
 
-    def test_iscore3(self):
+    def test_iscore4(self):
         init_balance: int = 20000 * ICX_FACTOR
         stake_value: int = 10000 * ICX_FACTOR
         account_count: int = 2
