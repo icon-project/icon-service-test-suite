@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from iconservice.icon_constant import PREP_MAIN_PREPS
+from iconservice.icon_constant import PREP_MAIN_PREPS, REV_DECENTRALIZATION
 
 from test_suite.json_rpc_api.base import Base, PREP_REGISTER_COST_ICX, ICX_FACTOR, Account
 
@@ -23,7 +23,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         total_supply: int = self.icon_service.get_total_supply()
 
-        iconist_stake_amount: int = total_supply * 1 // 100
+        iconist_stake_amount: int = total_supply * 2 // 100
         iconist_delegate_amount: int = iconist_stake_amount // 10
 
         self.distribute_icx(iconist_accounts, iconist_stake_amount + ICX_FACTOR)
@@ -34,20 +34,23 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         self.distribute_icx(sub_prep_accounts, prep_register_cost + ICX_FACTOR + iconist_stake_amount)
         self.register_prep(main_prep_accounts)
         self.register_prep(sub_prep_accounts)
-
-        # 모든 main prep에 0.1% 씩 delegate
         delegations = []
         for i, account in enumerate(iconist_accounts):
             delegations.append([(main_prep_accounts[i], iconist_delegate_amount)])
         self.set_delegation(iconist_accounts, delegations)
 
-        sub_prep_delegations = [(sub_prep_accounts[0], iconist_delegate_amount // 2)]
-        self.set_delegation([iconist], sub_prep_delegations)
+        sub_prep_delegations = [(main_prep_accounts[0], iconist_delegate_amount),
+                                (sub_prep_accounts[0], iconist_delegate_amount)]
+        self.set_delegation([iconist], [sub_prep_delegations])
+        builtin_owner = Account(self._test1)
 
-        # prep23는 자기 자신에게 0.01 delegate
-        response: dict = self.get_main_prep_list()
-        expected_preps: list = []
-        expected_total_delegated: int = 0
+        # set Revision REV_IISS (decentralization)
+        tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
+        tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(main_prep_accounts))
+        tx_results = self.get_txresults(self.icon_service, tx_hashes)
+        for tx_result in tx_results:
+            self.assertEqual(tx_result['status'], 1)
 
         calculate1_block_height: int = self._make_blocks_to_end_calculation()
 
