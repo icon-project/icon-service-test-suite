@@ -272,7 +272,7 @@ class TestPRep(Base):
         user1_register_data = self._create_register_prep_params(accounts[1])
 
         # user0 register with invalid country code and user1 register with valid country
-        user0_register_data[ConstantKeys.COUNTRY] = "ABC"
+        user0_register_data[ConstantKeys.COUNTRY] = "KOR"
         user1_register_data[ConstantKeys.COUNTRY] = "USA"
         user_data = [user0_register_data, user1_register_data]
         tx_list = []
@@ -289,7 +289,7 @@ class TestPRep(Base):
         prep0 = self.get_prep(accounts[0])
         prep1 = self.get_prep(accounts[1])
 
-        self.assertEqual("ZZZ", prep0[ConstantKeys.COUNTRY])
+        self.assertEqual("KOR", prep0[ConstantKeys.COUNTRY])
         self.assertEqual("USA", prep1[ConstantKeys.COUNTRY])
 
         self.refund_icx(accounts)

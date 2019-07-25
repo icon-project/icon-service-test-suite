@@ -30,7 +30,7 @@ fi
 
 if [[ ${decentralizationTestFlag} -eq 1 ]];then
     ./ready.sh
-    testFiles=(`ls test_suite/json_rpc_api/decentralized | grep test_`)
+    testFiles=(`ls test_suite/json_rpc_api/decentralized | grep test_decentralization`)
     for testFile in ${testFiles[*]};do
         tbears start
         pushd test_suite/json_rpc_api/decentralized
@@ -44,7 +44,7 @@ if [[ ${decentralizationTestFlag} -eq 1 ]];then
         pytest test_suite/json_rpc_api/decentralized/test_decentralization"$n".py
         if [[ ${allFlag} -eq 1 ]];then
             pushd test_suite/json_rpc_api
-            pytest --ignore=decentralized --ignore=scenario
+            pytest --ignore-glob=decentralized/test_decentralization*.py --ignore=scenario
             popd
         fi
         tbears stop
