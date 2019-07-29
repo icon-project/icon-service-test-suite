@@ -432,7 +432,7 @@ class Base(IconIntegrateTestBase):
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
-            .method("getPRepList") \
+            .method("getPReps") \
             .params(params) \
             .build()
         response = self.process_call(call, self.icon_service)
@@ -442,7 +442,7 @@ class Base(IconIntegrateTestBase):
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
-            .method("getMainPRepList") \
+            .method("getMainPReps") \
             .build()
         response = self.process_call(call, self.icon_service)
         return response
@@ -451,7 +451,7 @@ class Base(IconIntegrateTestBase):
         call = CallBuilder() \
             .from_(self._test1.get_address()) \
             .to(SYSTEM_ADDRESS) \
-            .method("getSubPRepList") \
+            .method("getSubPReps") \
             .build()
         response = self.process_call(call, self.icon_service)
         return response
@@ -586,7 +586,7 @@ class Base(IconIntegrateTestBase):
         return self.icon_service_for_debug.estimate_step(tx)
 
     # ============================================================= #
-    def claim_iscore(self, accounts: List["Account"]):
+    def claim_iscore(self, accounts: List["Account"], expected_result: bool = True):
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_claim_iscore_tx(account)
@@ -596,12 +596,13 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
-            self.assertEqual(True, tx_results[i]['status'])
-            claimed_icx: str = tx_results[i]['eventLogs'][0]["data"][1]
-            account.balance += int(claimed_icx, 16)
+            self.assertEqual(expected_result, tx_results[i]['status'])
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+            if expected_result:
+                claimed_icx: str = tx_results[i]['eventLogs'][0]["data"][1]
+                account.balance += int(claimed_icx, 16)
 
-    def distribute_icx(self, accounts: List['Account'], init_balance: int):
+    def distribute_icx(self, accounts: List['Account'], init_balance: int, expected_result: bool = True):
         admin: 'Account' = self.load_admin()
         tx_list = []
         for account in accounts:
@@ -612,10 +613,10 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
-            self.assertEqual(True, tx_results[i]['status'])
+            self.assertEqual(expected_result, tx_results[i]['status'])
             account.balance += init_balance
 
-    def set_stake(self, accounts: List['Account'], stake_value: int):
+    def set_stake(self, accounts: List['Account'], stake_value: int, expected_result: bool = True):
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value)
@@ -624,10 +625,10 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
-            self.assertEqual(True, tx_results[i]['status'])
+            self.assertEqual(expected_result, tx_results[i]['status'])
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
-    def set_delegation(self, accounts: List['Account'], origin_delegations_list: list):
+    def set_delegation(self, accounts: List['Account'], origin_delegations_list: list, expected_result: bool = True):
         tx_list: list = []
         for i, account in enumerate(accounts):
             tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
@@ -636,10 +637,10 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
-            self.assertEqual(True, tx_results[i]['status'])
+            self.assertEqual(expected_result, tx_results[i]['status'])
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
-    def register_prep(self, accounts: List['Account']):
+    def register_prep(self, accounts: List['Account'], expected_result: bool = True):
         tx_list: list = []
         for account in accounts:
             tx: 'SignedTransaction' = self.create_register_prep_tx(account)
@@ -648,9 +649,10 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
-            self.assertEqual(True, tx_results[i]['status'])
-            account.balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
-            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+            self.assertEqual(expected_result, tx_results[i]['status'])
+            if expected_result:
+                account.balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
+                account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
     def refund_icx(self, accounts: List['Account']):
         new_accounts: List['Account'] = []

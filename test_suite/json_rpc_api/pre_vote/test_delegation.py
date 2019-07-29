@@ -53,16 +53,7 @@ class TestDelegation(Base):
             origin_delegations.append((accounts[0], stake_value))
         origin_delegations_list.append(origin_delegations)
 
-        tx_list: list = []
-        for i, account in enumerate(accounts):
-            tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(False, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        self.set_delegation(accounts, origin_delegations_list, False)
 
         # get delegation
         for account in accounts:
@@ -403,21 +394,12 @@ class TestDelegation(Base):
         delegation_value: int = stake_value // delegation_cnt
 
         # set over delegation user0 to user20 ~ 29 + 1
-        tx_list: list = []
         origin_delegations_list: list = []
         origin_delegations: List[Tuple['Account', int]] = []
         for i in range(start_index, start_index + delegation_cnt):
             origin_delegations.append((accounts[i], delegation_value))
         origin_delegations_list.append(origin_delegations)
-        for i, account in enumerate(accounts[:1]):
-            tx: 'SignedTransaction' = self.create_set_delegation_tx(account, origin_delegations_list[i])
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(False, tx_result['status'])
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
+        self.set_delegation(accounts[:1], origin_delegations_list, False)
 
         # case 2 result check again
         delegation_cnt: int = IISS_MAX_DELEGATIONS

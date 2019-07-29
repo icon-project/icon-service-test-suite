@@ -324,13 +324,7 @@ class TestStake(Base):
 
         # set full stake
         stake_value: int = accounts[0].balance
-        tx: 'SignedTransaction' = self.create_set_stake_tx(accounts[0], stake_value)
-        tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, account in enumerate(accounts):
-            self.assertEqual(False, tx_results[i]['status'])
-            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+        self.set_stake(accounts[:1], stake_value, False)
 
         # set full stake - estimated_fee
         stake_value: int = accounts[0].balance - estimate_fee
@@ -423,16 +417,7 @@ class TestStake(Base):
 
         # Fail
         # unstake 2 loop
-        tx_list: list = []
-        for account in accounts:
-            tx: 'SignedTransaction' = self.create_set_stake_tx(account, stake_value - 2)
-            tx_list.append(tx)
-        tx_hashes: list = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
-        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
-        for i, account in enumerate(accounts):
-            self.assertEqual(False, tx_results[i]['status'])
-            account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
+        self.set_stake(accounts, stake_value - 2, False)
 
         for account in accounts:
             voting_power: int = int(self.get_delegation(account)["votingPower"], 16)
