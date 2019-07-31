@@ -83,8 +83,14 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, 50.0)
 
     def _make_blocks_to_end_calculation(self) -> int:
-        iiss_info = self.get_iiss_info()
-        next_calculation = int(iiss_info.get('nextCalculation', 0), 16)
+        iiss_info: dict = self.get_iiss_info()
+        next_calculation: int = int(iiss_info.get('nextCalculation', 0), 16)
+        cur_block_height: int = self._get_block_height()
+        if cur_block_height == next_calculation - 1:
+            # last calculate block
+            self._make_blocks(to=next_calculation)
+            iiss_info: dict = self.get_iiss_info()
+            next_calculation: int = int(iiss_info.get('nextCalculation', 0), 16)
         self._make_blocks(to=next_calculation - 1)
 
         self.assertEqual(self._get_block_height(), next_calculation - 1)
