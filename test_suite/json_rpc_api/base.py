@@ -104,7 +104,7 @@ class Base(IconIntegrateTestBase):
         actual_issue_amount = 0
         for height in range(start_calc_block, end_calc_block + 1):
             issue_data_per_block = [height]
-            calculated_issue_in_block = int(self.icon_service.get_block(30)['confirmed_transaction_list'][0]['data']['prep']['value'], 16)
+            calculated_issue_in_block = int(self.icon_service.get_block(height)['confirmed_transaction_list'][0]['data']['prep']['value'], 16)
             calulated_issue_amount += calculated_issue_in_block
             issue_data_per_block.append(calculated_issue_in_block)
             result = self.icon_service.get_block(height)['confirmed_transaction_list'][0]['data']['result']

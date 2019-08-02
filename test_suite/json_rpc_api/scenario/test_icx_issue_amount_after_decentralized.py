@@ -82,6 +82,8 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         sub_prep_actual_validate_blocks = int(sub_prep23_info_after_calc1['validatedBlocks'], 16)
         self.assertEqual(0, sub_prep_actual_total_blocks)
         self.assertEqual(0, sub_prep_actual_validate_blocks)
+        cumulatived_covered_fee = sum([issue_data[2] for issue_data in issue_data_of_term0])
+        self.assertEqual(cumulatived_covered_fee + actual_issue_amount_of_term0, calulated_issue_amount_of_term0)
         # check the total supply and fee treasury
 
         # ################################ term 1 (34 ~ 55)
@@ -109,12 +111,6 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         sub_prep_expected_iscore_from_excel = 9520476502952230000
         print(sub_prep_expected_iscore_from_excel, sub_prep1_i_score_result_after_calc2)
 
-        # check the total issued amount about term 0 (should beta1 + beta2 + beta3 - fee)
-
-        # check the total issued amount about term 0 (calc2)
-
-        # check the diff between IS and RC (calc2)
-
         # ################################ term 2 (56 ~ 77)
         calculate3_block_height: int = self._make_blocks_to_end_calculation()
         issue_data_of_term2, calulated_issue_amount_of_term2, actual_issue_amount_of_term2 = \
@@ -130,7 +126,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         # check the I-SCORE of iconist1 about term 1 (end of calc3)
         expected_reward_of_iconist1 = 6558517506172839506
-        print(iconist_expected_iscore_from_excel, iconist_i_score_result_after_calc3
+        print(expected_reward_of_iconist1, iconist_i_score_result_after_calc3
               - iconist_i_score_result_after_calc2)
 
         # check the I-SCORE of main-prep about term 1 (end of calc3)
@@ -139,8 +135,8 @@ class TestIcxIssueAmountAfterDecentralized(Base):
               - main_prep1_i_score_result_after_calc2)
 
         # check the I-SCORE of sub-prep about term 1 (end of calc3)
-        sub_prep_expected_iscore_from_excel = 9520476502952230000
-        print(sub_prep_expected_iscore_from_excel, main_prep1_i_score_result_after_calc3
+        sub_prep_expected_iscore_from_excel = 8403659749865810000
+        print(sub_prep_expected_iscore_from_excel, sub_prep1_i_score_result_after_calc3
               - sub_prep1_i_score_result_after_calc2)
 
         # ################################ term 3 (78 ~ 99)
@@ -149,9 +145,25 @@ class TestIcxIssueAmountAfterDecentralized(Base):
             self.get_issue_info_after_decentralized(calculate3_block_height + 1, calculate4_block_height)
         total_supply_after_calc4: int = self.icon_service.get_total_supply()
         treasury_balance_after_calc4: int = self.get_balance(treausury_address)
-        iconist_i_score_result_after_calc2 = int(self.query_iscore(iconist)['estimatedICX'], 16)
+        iconist_i_score_result_after_calc4 = int(self.query_iscore(iconist)['estimatedICX'], 16)
         main_prep1_i_score_result_after_calc4 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
         main_prep1_info_after_calc4 = self.get_prep(main_prep1)
         sub_prep1_i_score_result_after_calc4 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
         sub_prep23_info_after_calc4 = self.get_prep(sub_prep23)
         rrep_after_calc4 = int(self.get_iiss_info()["variable"]["rrep"], 16)
+
+        # check the I-SCORE of iconist1 about term 1 (end of calc3)
+        expected_reward_of_iconist1 = 6558517506172839506
+        print(iconist_expected_iscore_from_excel, iconist_i_score_result_after_calc4
+              - iconist_i_score_result_after_calc3)
+
+        # check the I-SCORE of main-prep about term 1 (end of calc3)
+        main_prep_expected_iscore_from_excel = 2269524959742350000
+        print(main_prep_expected_iscore_from_excel, main_prep1_i_score_result_after_calc4
+              - main_prep1_i_score_result_after_calc3)
+
+        # check the I-SCORE of sub-prep about term 1 (end of calc3)
+        sub_prep_expected_iscore_from_excel = 8403659749865810000
+        print(sub_prep_expected_iscore_from_excel, sub_prep1_i_score_result_after_calc4
+              - sub_prep1_i_score_result_after_calc3)
+
