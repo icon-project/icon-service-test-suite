@@ -5,7 +5,7 @@
     "stateDbRootPath": "./.statedb",
     "log": {
         "logger": "tbears",
-        "level": "info",
+        "level": "debug",
         "filePath": "./tbears.log",
         "colorLog": true,
         "outputType": "file",
@@ -547,11 +547,11 @@
     "blockConfirmInterval": 2,
     "blockConfirmEmpty": false,
     "blockGeneratorRotation": true,
-    "blockGenerateCountPerLeader": 10,
+    "blockGenerateCountPerLeader": 1,
     "blockManualConfirm": true,
-    "networkDelayMs": 5,
-    "iissCalculatePeriod": 10,
-    "termPeriod": 10,
+    "networkDelayMs": 150,
+    "iissCalculatePeriod": 22,
+    "termPeriod": 22,
     "iissMetaData": {
         "lockMin": 10,
         "lockMax": 12
