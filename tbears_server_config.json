@@ -549,7 +549,7 @@
     "blockGeneratorRotation": true,
     "blockGenerateCountPerLeader": 1,
     "blockManualConfirm": true,
-    "networkDelayMs": 150,
+    "networkDelayMs": 5,
     "iissCalculatePeriod": 22,
     "termPeriod": 22,
     "iissMetaData": {

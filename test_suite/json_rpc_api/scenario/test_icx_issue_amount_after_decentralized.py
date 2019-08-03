@@ -43,14 +43,22 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         self.set_delegation(iconist_accounts + sub_prep_accounts, delegations)
 
         # set Revision REV_IISS (decentralization)
-        builtin_owner = Account(self._test1)
+        info: dict = self.get_iiss_info()
+        print(f"origin calc next1: {int(info['nextCalculation'], 16)}")
+        print(f"block height1: {self._get_block_height()}")
+
+        builtin_owner = self.load_admin()
         tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(main_prep_accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
             self.assertEqual(tx_result['status'], 1)
-        rrep = int(self.get_iiss_info()["variable"]["rrep"], 16)
+        info: dict = self.get_iiss_info()
+        print(f"origin calc next2: {int(info['nextCalculation'], 16)}")
+        print(f"block height2: {self._get_block_height()}")
+
+        rrep = int(info["variable"]["rrep"], 16)
         expected_rrep = 1_200
         self.assertEqual(expected_rrep, rrep)
         block_height_before_issue = self._get_block_height()
