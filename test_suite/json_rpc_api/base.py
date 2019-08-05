@@ -560,7 +560,6 @@ class Base(IconIntegrateTestBase):
             ConstantKeys.WEBSITE: f"https://{name}.example.com",
             ConstantKeys.DETAILS: f"https://{name}.example.com/details",
             ConstantKeys.P2P_ENDPOINT: f"{name}.example.com:7100",
-            ConstantKeys.PUBLIC_KEY: f"0x{account.wallet.bytes_public_key.hex()}"
         }
 
     @staticmethod

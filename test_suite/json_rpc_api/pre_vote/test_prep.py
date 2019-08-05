@@ -20,7 +20,7 @@ class TestPRep(Base):
         # create
         self.distribute_icx(accounts, init_balance)
 
-        keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.PUBLIC_KEY, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
+        keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
                 ConstantKeys.EMAIL, ConstantKeys.NAME, ConstantKeys.CITY, ConstantKeys.COUNTRY]
         register_data = self._create_register_prep_params(account)
 
@@ -179,7 +179,7 @@ class TestPRep(Base):
         # create
         self.distribute_icx(accounts, init_balance)
 
-        keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.PUBLIC_KEY, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
+        keys = [ConstantKeys.P2P_ENDPOINT, ConstantKeys.WEBSITE, ConstantKeys.DETAILS,
                 ConstantKeys.EMAIL, ConstantKeys.NAME]
         register_data = self._create_register_prep_params(account)
 
@@ -209,7 +209,6 @@ class TestPRep(Base):
         set_data[ConstantKeys.DETAILS] = details
         set_data[ConstantKeys.EMAIL] = email
         set_data[ConstantKeys.NAME] = name
-        del set_data[ConstantKeys.PUBLIC_KEY]
         tx = self.create_set_prep_tx(account, set_data=set_data)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
