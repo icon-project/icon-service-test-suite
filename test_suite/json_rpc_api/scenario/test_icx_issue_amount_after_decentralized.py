@@ -13,6 +13,9 @@ class TestIcxIssueAmountAfterDecentralized(Base):
     def test_issue(self):
         if not self.get_main_prep_list():
             return
+
+        print(f"IISS Start BH: {self._get_block_height()}")
+
         prep_register_cost: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
         main_prep_accounts: List['Account'] = self.create_accounts(PREP_MAIN_PREPS)
         sub_prep_accounts: List['Account'] = self.create_accounts(1)
@@ -21,6 +24,9 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         iconist: 'Account' = iconist_accounts[0]
         main_prep1: 'Account' = main_prep_accounts[1]
         sub_prep23: 'Account' = sub_prep_accounts[0]
+        print(f"iconist:", iconist.wallet.get_address())
+        print(f"main_prep1:", main_prep1.wallet.get_address())
+        print(f"sub_prep23:", sub_prep23.wallet.get_address())
 
         total_supply: int = self.icon_service.get_total_supply()
         treausury_balance: int = self.get_balance(treausury_address)
@@ -36,16 +42,18 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         self.distribute_icx(sub_prep_accounts, prep_register_cost + ICX_FACTOR)
         self.register_prep(main_prep_accounts)
         self.register_prep(sub_prep_accounts)
+
         delegations = []
         for i, account in enumerate(iconist_accounts):
             delegations.append([(main_prep_accounts[i], iconist_delegate_amount)])
         delegations.append([(sub_prep_accounts[0], iconist_delegate_amount)])
         self.set_delegation(iconist_accounts + sub_prep_accounts, delegations)
+        print(f"IISS Start Delegation BH: {self._get_block_height()}")
 
         # set Revision REV_IISS (decentralization)
         info: dict = self.get_iiss_info()
         print(f"origin calc next1: {int(info['nextCalculation'], 16)}")
-        print(f"block height1: {self._get_block_height()}")
+        print(f"Before Decentralization BH: {self._get_block_height()}")
 
         builtin_owner = self.load_admin()
         tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
@@ -56,7 +64,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
             self.assertEqual(tx_result['status'], 1)
         info: dict = self.get_iiss_info()
         print(f"origin calc next2: {int(info['nextCalculation'], 16)}")
-        print(f"block height2: {self._get_block_height()}")
+        print(f"After Decentralization BH: {self._get_block_height()}")
 
         rrep = int(info["variable"]["rrep"], 16)
         expected_rrep = 1_200
@@ -68,6 +76,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         # ################################ term 0 (12 ~ 33)
         calculate1_block_height: int = self._make_blocks_to_end_calculation()
+        print(f"term0 BH: {self._get_block_height()}")
         issue_data_of_term0, calulated_issue_amount_of_term0, actual_issue_amount_of_term0 = \
             self.get_issue_info_after_decentralized(block_height_before_issue + 1, calculate1_block_height)
         treasury_balance_after_calc1: int = self.get_balance(treausury_address)
@@ -96,6 +105,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         # ################################ term 1 (34 ~ 55)
         calculate2_block_height: int = self._make_blocks_to_end_calculation()
+        print(f"term1 BH: {self._get_block_height()}")
         issue_data_of_term1, calulated_issue_amount_of_term1, actual_issue_amount_of_term1 = \
             self.get_issue_info_after_decentralized(calculate1_block_height + 1, calculate2_block_height)
         total_supply_after_calc2: int = self.icon_service.get_total_supply()
@@ -121,6 +131,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         # ################################ term 2 (56 ~ 77)
         calculate3_block_height: int = self._make_blocks_to_end_calculation()
+        print(f"term2 BH: {self._get_block_height()}")
         issue_data_of_term2, calulated_issue_amount_of_term2, actual_issue_amount_of_term2 = \
             self.get_issue_info_after_decentralized(calculate2_block_height + 1, calculate3_block_height)
         total_supply_after_calc3: int = self.icon_service.get_total_supply()
@@ -149,6 +160,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         # ################################ term 3 (78 ~ 99)
         calculate4_block_height: int = self._make_blocks_to_end_calculation()
+        print(f"term2 BH: {self._get_block_height()}")
         issue_data_of_term3, calulated_issue_amount_of_term3, actual_issue_amount_of_term3 = \
             self.get_issue_info_after_decentralized(calculate3_block_height + 1, calculate4_block_height)
         total_supply_after_calc4: int = self.icon_service.get_total_supply()
