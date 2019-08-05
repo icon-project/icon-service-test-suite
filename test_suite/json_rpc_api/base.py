@@ -90,6 +90,14 @@ class Base(IconIntegrateTestBase):
         self.assertEqual(self._get_block_height(), next_calculation - 1)
         return next_calculation - 1
 
+    def _make_blocks_to_calculate(self) -> int:
+        iiss_info = self.get_iiss_info()
+        next_calculation = int(iiss_info.get('nextCalculation', 0), 16)
+        self._make_blocks(to=next_calculation)
+
+        self.assertEqual(self._get_block_height(), next_calculation)
+        return next_calculation
+
     @staticmethod
     def create_deploy_score_tx(score_path: str,
                                from_: 'Account',
@@ -648,7 +656,7 @@ class Base(IconIntegrateTestBase):
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
         for i, account in enumerate(accounts):
-            self.assertEqual(True, tx_results[i]['status'])
+            self.assertEqual(True, tx_results[i]['status'], tx_results[i])
             account.balance -= PREP_REGISTER_COST_ICX * ICX_FACTOR
             account.balance -= tx_results[i]['stepUsed'] * tx_results[i]['stepPrice']
 
@@ -658,6 +666,7 @@ class Base(IconIntegrateTestBase):
             if self.get_balance(account) > 0:
                 new_accounts.append(account)
 
+        # remove delegation
         origin_delegations_list: list = [[]] * len(new_accounts)
         self.set_delegation(new_accounts, origin_delegations_list)
 
@@ -741,3 +750,6 @@ class Account:
     def __init__(self, wallet: 'KeyWallet' = None, balance: int = 0):
         self.wallet: 'KeyWallet' = wallet
         self.balance: int = balance
+
+    def __str__(self):
+        return f"{self.wallet.get_address()}: {self.balance}"
