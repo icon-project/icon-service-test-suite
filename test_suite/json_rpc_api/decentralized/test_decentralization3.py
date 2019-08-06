@@ -73,24 +73,4 @@ class TestDecentralization3(Base):
         }
         self.assertEqual(expected_response, response)
 
-        # delegate to PRep 0
-        for i, account in enumerate(iconists):
-            delegations = [[(main_preps[i], 0)]]
-            self.set_delegation([account], delegations)
-        self._make_blocks_to_end_calculation()
-
-        # get main prep
-        response: dict = self.get_main_prep_list()
-        expected_preps: list = []
-        for main_prep in main_preps:
-            expected_preps.append({
-                'address': main_prep.wallet.address,
-                'delegated': hex(0)
-            })
-        expected_response: dict = {
-            "preps": expected_preps,
-            "totalDelegated": hex(0)
-        }
-        self.assertEqual(expected_response, response)
-
         self.refund_icx(accounts)

@@ -18,17 +18,19 @@ MIN_DELEGATION = int(IISS_ANNUAL_BLOCK / ISCORE_EXCHANGE_RATE * (gv_divider / mi
 
 class TestIScore(Base):
 
-    def _calculate_iscore(self, delegation: int, st: int, ed: int) -> int:
+    def _calculate_iscore(self, delegation: int, st: int, ed: int, rrep: int) -> int:
         if delegation < MIN_DELEGATION:
             return 0
 
-        iiss_info = self.get_iiss_info()
-        rrep = int(iiss_info['variable'].get('rrep'), 16)
         if rrep < min_rrep:
             return 0
 
         new_rrep: int = IssueFormula.calculate_temporary_reward_prep(rrep)
         return int(delegation * new_rrep * (ed - st) / reward_divider)
+
+    def _get_rrep(self) -> int:
+        iiss_info = self.get_iiss_info()
+        return int(iiss_info['variable'].get('rrep'), 16)
 
     def test_iscore1(self):
         init_balance: int = 3000 * ICX_FACTOR
@@ -72,27 +74,30 @@ class TestIScore(Base):
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(0), response['iscore'])
 
+        rrep: int = self._get_rrep()
         # increase block height to end of 1st calculation
         calculate1_block_height: int = self._make_blocks_to_end_calculation()
         # calculate IScore with rrep at calculate1_block_height
-        iscore1: int = self._calculate_iscore(delegation_value, delegation_block, calculate1_block_height)
+        iscore1: int = self._calculate_iscore(delegation_value, delegation_block, calculate1_block_height, rrep)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(0), response['iscore'])
 
+        rrep: int = self._get_rrep()
         # increase block height to end of 2nd calculation
         calculate2_block_height: int = self._make_blocks_to_end_calculation()
-        iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height)
+        iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height, rrep)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1), response['iscore'])
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
 
+        rrep: int = self._get_rrep()
         # increase block height to end of 3rd calculation
         calculate3_block_height: int = self._make_blocks_to_end_calculation()
-        iscore3: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height)
+        iscore3: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height, rrep)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
@@ -304,27 +309,30 @@ class TestIScore(Base):
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(0), response['iscore'])
 
+        rrep: int = self._get_rrep()
         # increase block height to end of 1st calculation
         calculate1_block_height: int = self._make_blocks_to_end_calculation()
         # calculate IScore with rrep at calculate1_block_height
-        iscore1: int = self._calculate_iscore(delegation_value, delegation_block, calculate1_block_height)
+        iscore1: int = self._calculate_iscore(delegation_value, delegation_block, calculate1_block_height, rrep)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(0), response['iscore'])
 
+        rrep: int = self._get_rrep()
         # increase block height to end of 2nd calculation
         calculate2_block_height: int = self._make_blocks_to_end_calculation()
-        iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height)
+        iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height, rrep)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1), response['iscore'])
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
 
+        rrep: int = self._get_rrep()
         # increase block height to end of 3rd calculation
         calculate3_block_height: int = self._make_blocks_to_end_calculation()
-        _: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height)
+        _: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height, rrep)
 
         # queryIScore
         response: dict = self.query_iscore(accounts[0])
