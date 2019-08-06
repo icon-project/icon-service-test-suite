@@ -62,6 +62,7 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
             self.assertEqual(tx_result['status'], 1)
+        self._make_blocks_to_end_calculation()
         info: dict = self.get_iiss_info()
         print(f"origin calc next2: {int(info['nextCalculation'], 16)}")
         print(f"After Decentralization BH: {self._get_block_height()}")

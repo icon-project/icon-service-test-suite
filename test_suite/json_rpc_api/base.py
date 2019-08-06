@@ -98,7 +98,7 @@ class Base(IconIntegrateTestBase):
 
     def get_issue_info_after_decentralized(self, start_calc_block, end_calc_block):
         if self.icon_service.get_block(start_calc_block)['confirmed_transaction_list'][0]['dataType'] != 'base':
-            return []
+            return [], 0, 0
         issue_data_of_term = []
         calulated_issue_amount = 0
         actual_issue_amount = 0
