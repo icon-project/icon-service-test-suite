@@ -765,6 +765,21 @@ class Base(IconIntegrateTestBase):
     def sleep_ratio_from_account(accounts: List["Account"]):
         return min(max(1.0, len(accounts)), 50.0)
 
+    def get_txresults(self,
+                      network: IconService,
+                      tx_hashes: list) -> list:
+        tx_results: list = []
+
+        try:
+            tx_result = network.get_transaction_result(tx_hashes[0])
+        except:
+            sleep(1.0)
+        finally:
+            for h in tx_hashes:
+                tx_result = network.get_transaction_result(h)
+                tx_results.append(tx_result)
+        return tx_results
+
 
 class Account:
     def __init__(self, wallet: 'KeyWallet' = None, balance: int = 0):
