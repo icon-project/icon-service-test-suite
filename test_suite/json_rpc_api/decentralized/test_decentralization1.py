@@ -57,6 +57,8 @@ class TestDecentralization1(Base):
         for tx_result in tx_results:
             self.assertEqual(tx_result['status'], 1)
 
+        self._make_blocks_to_end_calculation()
+
         # get main prep
         response: dict = self.get_main_prep_list()
         expected_preps: list = []

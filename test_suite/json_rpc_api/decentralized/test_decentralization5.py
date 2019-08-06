@@ -57,6 +57,8 @@ class TestDecentralization5(Base):
             delegations.append([(main_preps[i], minimum_delegate_amount_for_decentralization)])
         self.set_delegation(iconists, delegations)
 
+        self._make_blocks_to_end_calculation()
+
         # get main prep
         response: dict = self.get_main_prep_list()
         expected_preps: list = []

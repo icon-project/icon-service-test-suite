@@ -57,6 +57,8 @@ class TestDecentralization3(Base):
         # register PRep
         self.register_prep(main_preps)
 
+        self._make_blocks_to_end_calculation()
+
         # get main prep
         response: dict = self.get_main_prep_list()
         expected_preps: list = []

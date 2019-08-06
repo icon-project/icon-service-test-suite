@@ -96,6 +96,28 @@ class Base(IconIntegrateTestBase):
         self.assertEqual(self._get_block_height(), next_calculation - 1)
         return next_calculation - 1
 
+    def get_issue_info_after_decentralized(self, start_calc_block, end_calc_block):
+        if self.icon_service.get_block(start_calc_block)['confirmed_transaction_list'][0]['dataType'] != 'base':
+            return [], 0, 0
+        issue_data_of_term = []
+        calulated_issue_amount = 0
+        actual_issue_amount = 0
+        for height in range(start_calc_block, end_calc_block + 1):
+            issue_data_per_block = [height]
+            calculated_issue_in_block = int(self.icon_service.get_block(height)['confirmed_transaction_list'][0]['data']['prep']['value'], 16)
+            calulated_issue_amount += calculated_issue_in_block
+            issue_data_per_block.append(calculated_issue_in_block)
+            result = self.icon_service.get_block(height)['confirmed_transaction_list'][0]['data']['result']
+            issue_data_per_block.append(int(result['coveredByFee'], 16))
+            issue_data_per_block.append(int(result['coveredByOverIssuedICX'], 16))
+            actual_issue_in_block = int(result['issue'], 16)
+            actual_issue_amount += actual_issue_in_block
+            issue_data_per_block.append(int(result['issue'], 16))
+            issue_data_of_term.append(issue_data_per_block)
+
+        return issue_data_of_term, calulated_issue_amount, actual_issue_amount
+
+
     @staticmethod
     def create_deploy_score_tx(score_path: str,
                                from_: 'Account',
