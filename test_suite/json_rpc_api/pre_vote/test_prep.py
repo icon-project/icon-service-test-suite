@@ -175,6 +175,8 @@ class TestPRep(Base):
         account_count: int = 1
         accounts: List['Account'] = self.create_accounts(account_count)
         account = accounts[0]
+        iiss_info = self.get_iiss_info()
+        initial_irep = int(iiss_info['variable']['irep'], 16)
 
         # create
         self.distribute_icx(accounts, init_balance)
@@ -222,18 +224,7 @@ class TestPRep(Base):
             self.assertEqual(set_data[key], prep[key])
 
         # set irep on pre-vote
-        set_data2 = copy.deepcopy(set_data)
-        endpoint = "127.0.0.2:9000"
-        website = "https://website.example2.com"
-        details = "https://website.example2.com/details.json"
-        email = "myemail@my2.email"
-        name = "newname2"
-        set_data2[ConstantKeys.P2P_ENDPOINT] = endpoint
-        set_data2[ConstantKeys.WEBSITE] = website
-        set_data2[ConstantKeys.DETAILS] = details
-        set_data2[ConstantKeys.EMAIL] = email
-        set_data2[ConstantKeys.NAME] = name
-        tx = self.create_set_prep_tx(account, irep=45_000*ICX_FACTOR, set_data=set_data2)
+        tx = self.create_set_governance_variables_tx(account, irep=initial_irep * 12 // 10)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
@@ -241,22 +232,6 @@ class TestPRep(Base):
             self.assertEqual(tx_result['status'], 0)
             account.balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
-        prep = self.get_prep(account)
-        for key in set_data:
-            self.assertEqual(set_data[key], prep[key])
-
-        tx_list = []
-        for i, account in enumerate(accounts):
-            tx = self.create_unregister_prep_tx(account)
-            tx_list.append(tx)
-
-        tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
-        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
-        tx_results = self.get_txresults(self.icon_service, tx_hashes)
-
-        for i, tx_result in enumerate(tx_results):
-            self.assertEqual(tx_result['status'], 1)
-            accounts[i].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
         self.refund_icx(accounts)
 
     def test_4_register_prep_country(self):

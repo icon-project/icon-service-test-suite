@@ -56,8 +56,6 @@ class TestDecentralization4(Base):
         for i, account in enumerate(iconists):
             delegations.append([(main_preps[i], minimum_delegate_amount_for_decentralization)])
         self.set_delegation(iconists, delegations)
-        response = self.get_main_prep_list()
-        self.assertTrue(response['preps'])
 
         self._make_blocks_to_end_calculation()
 
