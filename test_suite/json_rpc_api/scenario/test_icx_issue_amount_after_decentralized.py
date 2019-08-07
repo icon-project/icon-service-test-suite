@@ -1,4 +1,5 @@
 import os
+from functools import reduce
 from typing import List
 
 from iconservice.icon_constant import PREP_MAIN_PREPS, REV_DECENTRALIZATION
@@ -14,7 +15,18 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         if not self.get_main_prep_list():
             return
 
-        print(f"IISS Start BH: {self._get_block_height()}")
+        # ################################ term 0 (3 ~ 25)
+        # in the term 0, only delegate reward (beta3) is provided
+        term0_info: dict = self.get_iiss_info()
+        print(f"###################################################################################################")
+        print(f"Term 0 START - start BH: {self._get_block_height()}, end BH: {int(term0_info['nextCalculation'], 16)-1}")
+        print(f"IISS START - start BH: {self._get_block_height()}")
+        term0_rrep = int(term0_info["variable"]["rrep"], 16)
+        term0_irep = int(term0_info["variable"]["irep"], 16)
+        expected_rrep = 1_200
+        expected_irep = 0
+        self.assertEqual(expected_rrep, term0_rrep)
+        self.assertEqual(expected_irep, term0_irep)
 
         prep_register_cost: int = (PREP_REGISTER_COST_ICX + 10) * ICX_FACTOR
         main_prep_accounts: List['Account'] = self.create_accounts(PREP_MAIN_PREPS)
@@ -28,12 +40,12 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         print(f"main_prep1:", main_prep1.wallet.get_address())
         print(f"sub_prep23:", sub_prep23.wallet.get_address())
 
-        total_supply: int = self.icon_service.get_total_supply()
-        treausury_balance: int = self.get_balance(treausury_address)
+        term0_total_supply: int = self.icon_service.get_total_supply()
+        term0_treausury_balance: int = self.get_balance(treausury_address)
 
-        iconist_stake_amount: int = total_supply * 2 // 100
+        iconist_stake_amount: int = term0_total_supply * 2 // 100
         iconist_delegate_amount: int = iconist_stake_amount // 10
-
+        print(f'Delegating amount per prep: {iconist_delegate_amount}')
         self.distribute_icx(iconist_accounts + sub_prep_accounts, iconist_stake_amount + ICX_FACTOR)
         self.set_stake(iconist_accounts + sub_prep_accounts, iconist_stake_amount)
 
@@ -48,13 +60,9 @@ class TestIcxIssueAmountAfterDecentralized(Base):
             delegations.append([(main_prep_accounts[i], iconist_delegate_amount)])
         delegations.append([(sub_prep_accounts[0], iconist_delegate_amount)])
         self.set_delegation(iconist_accounts + sub_prep_accounts, delegations)
-        print(f"IISS Start Delegation BH: {self._get_block_height()}")
+        print(f"IISS Delegation Start BH: {self._get_block_height()}")
 
         # set Revision REV_IISS (decentralization)
-        info: dict = self.get_iiss_info()
-        print(f"origin calc next1: {int(info['nextCalculation'], 16)}")
-        print(f"Before Decentralization BH: {self._get_block_height()}")
-
         builtin_owner = self.load_admin()
         tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
@@ -62,129 +70,177 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
         for tx_result in tx_results:
             self.assertEqual(tx_result['status'], 1)
+        print(f'set Decentralization revision at BH: {self._get_block_height()}')
+
         self._make_blocks_to_end_calculation()
-        info: dict = self.get_iiss_info()
-        print(f"origin calc next2: {int(info['nextCalculation'], 16)}")
-        print(f"After Decentralization BH: {self._get_block_height()}")
-
-        rrep = int(info["variable"]["rrep"], 16)
-        expected_rrep = 1_200
-        self.assertEqual(expected_rrep, rrep)
-        block_height_before_issue = self._get_block_height()
-
-        total_supply_after_decentralized: int = self.icon_service.get_total_supply()
-        treausury_balance_after_decentralized: int = self.get_balance(treausury_address)
-
-        # ################################ term 0 (12 ~ 33)
-        calculate1_block_height: int = self._make_blocks_to_end_calculation()
-        print(f"term0 BH: {self._get_block_height()}")
-        issue_data_of_term0, calulated_issue_amount_of_term0, actual_issue_amount_of_term0 = \
-            self.get_issue_info_after_decentralized(block_height_before_issue + 1, calculate1_block_height)
-        treasury_balance_after_calc1: int = self.get_balance(treausury_address)
-        total_supply_after_calc1: int = self.icon_service.get_total_supply()
-        iconist_i_score_result_after_calc1 = int(self.query_iscore(iconist)['estimatedICX'], 16)
-        main_prep1_i_score_result_after_calc1 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
-        main_prep1_info_after_calc1 = self.get_prep(main_prep1)
-        sub_prep1_i_score_result_after_calc1 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
-        sub_prep23_info_after_calc1 = self.get_prep(sub_prep23)
-        rrep_after_calc1 = int(self.get_iiss_info()["variable"]["rrep"], 16)
+        print(f'Term 0 End - end BH: {self._get_block_height()}')
+        treasury_balance_end_term_0: int = self.get_balance(treausury_address)
+        total_supply_end_term_0: int = self.icon_service.get_total_supply()
+        iconist_i_score_result_end_term_0 = int(self.query_iscore(iconist)['estimatedICX'], 16)
+        main_prep1_i_score_result_end_term_0 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
+        main_prep1_info_end_term_0 = self.get_prep(main_prep1)
+        sub_prep1_i_score_result_end_term_0 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
+        sub_prep23_info_end_term_0 = self.get_prep(sub_prep23)
 
         expected_iscore = 0
-        expected_rrep = 1_072
-        self.assertEqual(expected_iscore, iconist_i_score_result_after_calc1)
-        self.assertEqual(expected_iscore, main_prep1_i_score_result_after_calc1)
-        self.assertEqual(expected_iscore, sub_prep1_i_score_result_after_calc1)
-        self.assertEqual(expected_rrep, rrep_after_calc1)
+        self.assertEqual(expected_iscore, iconist_i_score_result_end_term_0)
+        self.assertEqual(expected_iscore, main_prep1_i_score_result_end_term_0)
+        self.assertEqual(expected_iscore, sub_prep1_i_score_result_end_term_0)
 
-        sub_prep_actual_total_blocks = int(sub_prep23_info_after_calc1['totalBlocks'], 16)
-        sub_prep_actual_validate_blocks = int(sub_prep23_info_after_calc1['validatedBlocks'], 16)
+        main_prep_actual_total_blocks = int(main_prep1_info_end_term_0['totalBlocks'], 16)
+        main_prep_actual_validate_blocks = int(main_prep1_info_end_term_0['validatedBlocks'], 16)
+        self.assertEqual(0, main_prep_actual_total_blocks)
+        self.assertEqual(0, main_prep_actual_validate_blocks)
+        sub_prep_actual_total_blocks = int(sub_prep23_info_end_term_0['totalBlocks'], 16)
+        sub_prep_actual_validate_blocks = int(sub_prep23_info_end_term_0['validatedBlocks'], 16)
         self.assertEqual(0, sub_prep_actual_total_blocks)
         self.assertEqual(0, sub_prep_actual_validate_blocks)
-        cumulatived_covered_fee = sum([issue_data[2] for issue_data in issue_data_of_term0])
-        self.assertEqual(cumulatived_covered_fee + actual_issue_amount_of_term0, calulated_issue_amount_of_term0)
-        # check the total supply and fee treasury
 
-        # ################################ term 1 (34 ~ 55)
-        calculate2_block_height: int = self._make_blocks_to_end_calculation()
-        print(f"term1 BH: {self._get_block_height()}")
+        # ################################ term 1 (26 ~ 47)
+        # in the term 1
+        term1_info: dict = self.get_iiss_info()
+        term1_start_block_height = self._get_block_height() + 1
+        print(f"###################################################################################################")
+        print(f"Term 1 START - start BH: {term1_start_block_height}")
+        print(f"Decentralization start")
+        term1_rrep = int(term1_info["variable"]["rrep"], 16)
+        term1_irep = int(term1_info["variable"]["irep"], 16)
+        # expected rrep, irep is extracted from the excel
+        expected_rrep = 1072
+        expected_irep = 50000 * 10 ** 18
+        # todo: check this value and if true, change to assert
+        print("rrep: ", expected_rrep, term1_rrep)
+        print("irep: ", expected_irep, term1_irep)
+        # self.assertEqual(expected_rrep, term1_rrep)
+        # self.assertEqual(expected_irep, term1_irep)
+
+        term1_total_supply: int = self.icon_service.get_total_supply()
+        term1_treausury_balance: int = self.get_balance(treausury_address)
+
+        term1_end_block_height: int = self._make_blocks_to_end_calculation()
+        print(f'Term 1 End - end BH: {term1_end_block_height}')
+        total_supply_end_term_1: int = self.icon_service.get_total_supply()
+        treasury_balance_end_term_1: int = self.get_balance(treausury_address)
         issue_data_of_term1, calulated_issue_amount_of_term1, actual_issue_amount_of_term1 = \
-            self.get_issue_info_after_decentralized(calculate1_block_height + 1, calculate2_block_height)
-        total_supply_after_calc2: int = self.icon_service.get_total_supply()
-        treasury_balance_after_calc2: int = self.get_balance(treausury_address)
-        iconist_i_score_result_after_calc2 = int(self.query_iscore(iconist)['estimatedICX'], 16)
-        main_prep1_i_score_result_after_calc2 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
-        main_prep1_info_after_calc2 =self.get_prep(main_prep1)
-        sub_prep1_i_score_result_after_calc2 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
-        sub_prep23_info_after_calc2 = self.get_prep(sub_prep23)
-        rrep_after_calc2 = int(self.get_iiss_info()["variable"]["rrep"], 16)
+            self.get_issue_info_after_decentralized(term1_start_block_height, term1_end_block_height)
+        cumulatived_covered_fee_of_term1 = sum([issue_data[2] for issue_data in issue_data_of_term1])
 
-        # check the I-SCORE of iconist1 about term 0 (end of calc2)
-        iconist_expected_iscore_from_excel = 7675334259259260000
-        print(iconist_expected_iscore_from_excel, iconist_i_score_result_after_calc2)
+        expected_total_issue_amount_of_term_1 = 202_620_594_000_000_000_000
+        print("calculated issue amount of term 1: ", expected_total_issue_amount_of_term_1, calulated_issue_amount_of_term1)
+        # As no diff between IS-RC at the term 0,
+        # coverted_fee + actual issue amount should equal to calculated issue amount of term0
+        diff_between_is_and_rc_in_term_0 = issue_data_of_term1[-1][3]
+        print("diff between IS and RC in term 0: ", 0, diff_between_is_and_rc_in_term_0)
+        print("issue amount check: ",
+              actual_issue_amount_of_term1 + cumulatived_covered_fee_of_term1, calulated_issue_amount_of_term1)
 
-        # check the I-SCORE of main-prep about term 0 (end of calc2)
-        main_prep_expected_iscore_from_excel = 2269524959742350000
-        print(main_prep_expected_iscore_from_excel, main_prep1_i_score_result_after_calc2)
+        treasury_balance_end_term_1: int = self.get_balance(treausury_address)
+        total_supply_end_term_1: int = self.icon_service.get_total_supply()
+        iconist_i_score_result_end_term_1 = int(self.query_iscore(iconist)['estimatedICX'], 16)
+        total_iscore_of_all_iconist_end_term_1 = sum(map(lambda iconist: int(self.query_iscore(iconist)['estimatedICX'], 16), iconist_accounts))
+        main_prep1_i_score_result_end_term_1 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
+        main_prep1_info_end_term_1 = self.get_prep(main_prep1)
+        sub_prep1_i_score_result_end_term_1 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
+        sub_prep23_info_end_term_1 = self.get_prep(sub_prep23)
+        # todo: check this value and if true, change to assert
+        # from excel
+        expected_total_iconist_i_score_of_term_0 = 110124361111111000000
+        print("total iconist iscore reward about term 0: ",
+              expected_total_iconist_i_score_of_term_0, total_iscore_of_all_iconist_end_term_1)
+        expected_main_prep_iscore_of_term_0 = 0
+        print("main prep iscore reward about term 0: ",
+              expected_main_prep_iscore_of_term_0, main_prep1_i_score_result_end_term_1)
+        # self.assertEqual(expected_main_prep_iscore, main_prep1_i_score_result_end_term_1)
+        # extracted from the excel
+        expected_sub_prep_iscore_about_term_0 = 5_005_652_777_777_780_000
+        expected_iconist_iscore_about_term_0 = 5_005_652_777_777_780_000
+        print("sub prep iscore about term 0: ",
+              expected_sub_prep_iscore_about_term_0, iconist_i_score_result_end_term_1)
+        print("iconist prep iscore about term 0: ",
+              expected_iconist_iscore_about_term_0, sub_prep1_i_score_result_end_term_1)
+        # self.assertEqual(expected_sub_prep_iscore_about_term_0, iconist_i_score_result_end_term_1)
+        # self.assertEqual(expected_iconist_iscore_about_term_0, sub_prep1_i_score_result_end_term_1)
 
-        # check the I-SCORE of sub-prep about term 0 (end of calc2)
-        sub_prep_expected_iscore_from_excel = 9520476502952230000
-        print(sub_prep_expected_iscore_from_excel, sub_prep1_i_score_result_after_calc2)
+        main_prep_actual_total_blocks = int(main_prep1_info_end_term_1['totalBlocks'], 16)
+        main_prep_actual_validate_blocks = int(main_prep1_info_end_term_1['validatedBlocks'], 16)
+        self.assertEqual(22, main_prep_actual_total_blocks)
+        self.assertEqual(22, main_prep_actual_validate_blocks)
+        sub_prep_actual_total_blocks = int(sub_prep23_info_end_term_1['totalBlocks'], 16)
+        sub_prep_actual_validate_blocks = int(sub_prep23_info_end_term_1['validatedBlocks'], 16)
+        self.assertEqual(0, sub_prep_actual_total_blocks)
+        self.assertEqual(0, sub_prep_actual_validate_blocks)
 
-        # ################################ term 2 (56 ~ 77)
-        calculate3_block_height: int = self._make_blocks_to_end_calculation()
-        print(f"term2 BH: {self._get_block_height()}")
+        # ################################ term 2 (48 ~ 69)
+        # in the term 2
+        term2_info: dict = self.get_iiss_info()
+        term2_start_block_height = self._get_block_height() + 1
+        print(f"###################################################################################################")
+        print(
+            f"Term 2 START - start BH: {term2_start_block_height}")
+        term2_rrep = int(term2_info["variable"]["rrep"], 16)
+        term2_irep = int(term2_info["variable"]["irep"], 16)
+        # expected rrep, irep is extracted from the excel
+        expected_rrep = 1072
+        expected_irep = 50000 * 10 ** 18
+        # todo: check this value and if true, change to assert
+        print("rrep:", expected_rrep, term2_rrep)
+        print("irep:", expected_irep, term2_irep)
+        # self.assertEqual(expected_rrep, term1_rrep)
+        # self.assertEqual(expected_irep, term1_irep)
+
+        term2_total_supply: int = self.icon_service.get_total_supply()
+        term2_treausury_balance: int = self.get_balance(treausury_address)
+
+        term2_end_block_height: int = self._make_blocks_to_end_calculation()
+        print(f'Term 2 End - end BH: {term2_end_block_height}')
+        total_supply_end_term_2: int = self.icon_service.get_total_supply()
+        treasury_balance_end_term_2: int = self.get_balance(treausury_address)
         issue_data_of_term2, calulated_issue_amount_of_term2, actual_issue_amount_of_term2 = \
-            self.get_issue_info_after_decentralized(calculate2_block_height + 1, calculate3_block_height)
-        total_supply_after_calc3: int = self.icon_service.get_total_supply()
-        treasury_balance_after_calc3: int = self.get_balance(treausury_address)
-        iconist_i_score_result_after_calc3 = int(self.query_iscore(iconist)['estimatedICX'], 16)
-        main_prep1_i_score_result_after_calc3 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
-        main_prep1_info_after_calc3 = self.get_prep(main_prep1)
-        sub_prep1_i_score_result_after_calc3 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
-        sub_prep23_info_after_calc3 = self.get_prep(sub_prep23)
-        rrep_after_calc3 = int(self.get_iiss_info()["variable"]["rrep"], 16)
+            self.get_issue_info_after_decentralized(term2_start_block_height, term2_end_block_height)
+        cumulatived_covered_fee_of_term2 = sum([issue_data[2] for issue_data in issue_data_of_term2])
 
-        # check the I-SCORE of iconist1 about term 1 (end of calc3)
-        expected_reward_of_iconist1 = 6558517506172839506
-        print(expected_reward_of_iconist1, iconist_i_score_result_after_calc3
-              - iconist_i_score_result_after_calc2)
+        treasury_balance_end_term_2: int = self.get_balance(treausury_address)
+        total_supply_end_term_2: int = self.icon_service.get_total_supply()
+        total_iscore_of_all_iconist_end_term_2 = sum(map(lambda iconist: int(self.query_iscore(iconist)['estimatedICX'], 16), iconist_accounts))
+        iconist_i_score_result_end_term_2 = int(self.query_iscore(iconist)['estimatedICX'], 16)
+        main_prep1_i_score_result_end_term_2 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
+        main_prep1_info_end_term_2 = self.get_prep(main_prep1)
+        sub_prep1_i_score_result_end_term_2 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
+        sub_prep23_info_end_term_2 = self.get_prep(sub_prep23)
 
-        # check the I-SCORE of main-prep about term 1 (end of calc3)
-        main_prep_expected_iscore_from_excel = 2269524959742350000
-        print(main_prep_expected_iscore_from_excel, main_prep1_i_score_result_after_calc3
-              - main_prep1_i_score_result_after_calc2)
+        self.assertEqual(treasury_balance_end_term_2 - term2_treausury_balance,
+                         actual_issue_amount_of_term2 + cumulatived_covered_fee_of_term2)
+        self.assertEqual(total_supply_end_term_2 - term2_total_supply,
+                         treasury_balance_end_term_2 - term2_treausury_balance - cumulatived_covered_fee_of_term2)
+        # todo: check this value and if true, change to assert
+        expected_total_iconist_i_score_about_term_1 = 144287385135802000000
+        print("total iconist iscore reward about term 1: ",
+              expected_total_iconist_i_score_about_term_1,
+              total_iscore_of_all_iconist_end_term_2 - total_iscore_of_all_iconist_end_term_1)
+        # self.assertEqual(expected_main_prep_iscore, main_prep1_i_score_result_end_term_1)
+        # extracted from the excel
+        # beta1 + beta2
+        expected_main_prep_iscore_about_term_1 = 424_382_716_049_383_000 + 1_845_142_243_692_970_000
+        # beta2 + beta3
+        expected_sub_prep_iscore_about_term_1 = 1_845_142_243_692_970_000 + 6_558_517_506_172_840_000
+        # beta3
+        expected_iconist_iscore_about_term_1 = 6_558_517_506_172_840_000
+        print("main prep iscore about term 1: ",
+              expected_main_prep_iscore_about_term_1, main_prep1_i_score_result_end_term_2)
+        print("iconist prep iscore about term 1: ",
+              expected_iconist_iscore_about_term_1,
+              iconist_i_score_result_end_term_2 - iconist_i_score_result_end_term_1)
+        print("sub prep iscore about term 1: ",
+              expected_sub_prep_iscore_about_term_1,
+              sub_prep1_i_score_result_end_term_2 - sub_prep1_i_score_result_end_term_1)
 
-        # check the I-SCORE of sub-prep about term 1 (end of calc3)
-        sub_prep_expected_iscore_from_excel = 8403659749865810000
-        print(sub_prep_expected_iscore_from_excel, sub_prep1_i_score_result_after_calc3
-              - sub_prep1_i_score_result_after_calc2)
+        main_prep_actual_total_blocks = int(main_prep1_info_end_term_1['totalBlocks'], 16)
+        main_prep_actual_validate_blocks = int(main_prep1_info_end_term_1['validatedBlocks'], 16)
+        self.assertEqual(22, main_prep_actual_total_blocks)
+        self.assertEqual(22, main_prep_actual_validate_blocks)
+        sub_prep_actual_total_blocks = int(sub_prep23_info_end_term_1['totalBlocks'], 16)
+        sub_prep_actual_validate_blocks = int(sub_prep23_info_end_term_1['validatedBlocks'], 16)
+        self.assertEqual(0, sub_prep_actual_total_blocks)
+        self.assertEqual(0, sub_prep_actual_validate_blocks)
 
-        # ################################ term 3 (78 ~ 99)
-        calculate4_block_height: int = self._make_blocks_to_end_calculation()
-        print(f"term2 BH: {self._get_block_height()}")
-        issue_data_of_term3, calulated_issue_amount_of_term3, actual_issue_amount_of_term3 = \
-            self.get_issue_info_after_decentralized(calculate3_block_height + 1, calculate4_block_height)
-        total_supply_after_calc4: int = self.icon_service.get_total_supply()
-        treasury_balance_after_calc4: int = self.get_balance(treausury_address)
-        iconist_i_score_result_after_calc4 = int(self.query_iscore(iconist)['estimatedICX'], 16)
-        main_prep1_i_score_result_after_calc4 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
-        main_prep1_info_after_calc4 = self.get_prep(main_prep1)
-        sub_prep1_i_score_result_after_calc4 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
-        sub_prep23_info_after_calc4 = self.get_prep(sub_prep23)
-        rrep_after_calc4 = int(self.get_iiss_info()["variable"]["rrep"], 16)
-
-        # check the I-SCORE of iconist1 about term 1 (end of calc3)
-        expected_reward_of_iconist1 = 6558517506172839506
-        print(iconist_expected_iscore_from_excel, iconist_i_score_result_after_calc4
-              - iconist_i_score_result_after_calc3)
-
-        # check the I-SCORE of main-prep about term 1 (end of calc3)
-        main_prep_expected_iscore_from_excel = 2269524959742350000
-        print(main_prep_expected_iscore_from_excel, main_prep1_i_score_result_after_calc4
-              - main_prep1_i_score_result_after_calc3)
-
-        # check the I-SCORE of sub-prep about term 1 (end of calc3)
-        sub_prep_expected_iscore_from_excel = 8403659749865810000
-        print(sub_prep_expected_iscore_from_excel, sub_prep1_i_score_result_after_calc4
-              - sub_prep1_i_score_result_after_calc3)
 

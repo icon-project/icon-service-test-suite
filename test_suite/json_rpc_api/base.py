@@ -97,11 +97,12 @@ class Base(IconIntegrateTestBase):
         return next_calculation - 1
 
     def get_issue_info_after_decentralized(self, start_calc_block, end_calc_block):
-        if self.icon_service.get_block(start_calc_block)['confirmed_transaction_list'][0]['dataType'] != 'base':
-            return [], 0, 0
         issue_data_of_term = []
         calulated_issue_amount = 0
         actual_issue_amount = 0
+        if self.icon_service.get_block(start_calc_block)['confirmed_transaction_list'][0]['dataType'] != 'base':
+            return issue_data_of_term, calulated_issue_amount, actual_issue_amount
+
         for height in range(start_calc_block, end_calc_block + 1):
             issue_data_per_block = [height]
             calculated_issue_in_block = int(self.icon_service.get_block(height)['confirmed_transaction_list'][0]['data']['prep']['value'], 16)
