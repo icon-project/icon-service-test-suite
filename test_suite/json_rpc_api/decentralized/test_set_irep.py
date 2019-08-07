@@ -1,7 +1,5 @@
 from typing import List, Tuple
 
-from iconservice.icon_constant import IISS_MIN_IREP
-
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR, Account, PREP_REGISTER_COST_ICX
 
 
@@ -14,8 +12,7 @@ class TestSetIRep(Base):
         accounts: List['Account'] = self.create_accounts(account_count)
 
         iiss_info1 = self.get_iiss_info()
-        irep = iiss_info1['variable']['irep']
-        self.assertEqual(IISS_MIN_IREP, int(irep, 16))
+        irep = int(iiss_info1['variable']['irep'], 16)
 
         # create
         self.distribute_icx(accounts, init_balance)
@@ -24,10 +21,10 @@ class TestSetIRep(Base):
         self.register_prep(accounts[:2])
 
         prep0 = self.get_prep(accounts[0])
-        self.assertEqual(hex(IISS_MIN_IREP), prep0['irep'])
+        self.assertEqual(hex(irep), prep0['irep'])
 
         prep1 = self.get_prep(accounts[1])
-        self.assertEqual(hex(IISS_MIN_IREP), prep1['irep'])
+        self.assertEqual(hex(irep), prep1['irep'])
 
         # delegate 100icx to prep0, 200icx to prep1
         self.set_stake(accounts, 200 * ICX_FACTOR)
@@ -52,8 +49,8 @@ class TestSetIRep(Base):
         # prep0 delegated : 100, prep1 delegated: 200
         # set irep prep0 : INITIAL_IREP * 1.2, prep1 : INITIALIREP * 0.8
         total_delegated_amount = sum(delegate_amount_list)
-        prep0_irep = IISS_MIN_IREP * 11 // 10
-        prep1_irep = IISS_MIN_IREP * 12 // 10
+        prep0_irep = irep * 11 // 10
+        prep1_irep = irep * 12 // 10
         tx_list = []
         tx_list.append(self.create_set_governance_variables_tx(accounts[0], prep0_irep))
         tx_list.append(self.create_set_governance_variables_tx(accounts[1], prep1_irep))
@@ -96,8 +93,7 @@ class TestSetIRep(Base):
         accounts: List['Account'] = self.create_accounts(account_count)
 
         iiss_info1 = self.get_iiss_info()
-        irep = iiss_info1['variable']['irep']
-        self.assertEqual(IISS_MIN_IREP, int(irep, 16))
+        irep = int(iiss_info1['variable']['irep'], 16)
 
         # create
         self.distribute_icx(accounts, init_balance)
@@ -106,13 +102,13 @@ class TestSetIRep(Base):
         self.register_prep(accounts[:1])
 
         prep0 = self.get_prep(accounts[0])
-        self.assertEqual(hex(IISS_MIN_IREP), prep0['irep'])
+        self.assertEqual(hex(irep), prep0['irep'])
 
         tx_list = []
-        # try to set irep to IISS_MIN_IREP*0.8 (invalid irep)
-        tx_list.append(self.create_set_governance_variables_tx(accounts[0], IISS_MIN_IREP * 8 // 10))
-        # try to set irep to IISS_MIN_IREP*1.3 (invalid irep)
-        tx_list.append(self.create_set_governance_variables_tx(accounts[0], IISS_MIN_IREP * 13 // 10))
+        # try to set irep to IISS_INITIAL_IREP*0.8 (invalid irep)
+        tx_list.append(self.create_set_governance_variables_tx(accounts[0], irep * 8 // 10))
+        # try to set irep to IISS_INITIAL_IREP*1.3 (invalid irep)
+        tx_list.append(self.create_set_governance_variables_tx(accounts[0], irep * 13 // 10))
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
         self.process_confirm_block_tx(self.icon_service)
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
@@ -123,7 +119,7 @@ class TestSetIRep(Base):
 
         # check irep
         prep = self.get_prep(accounts[0])
-        self.assertEqual(hex(IISS_MIN_IREP), prep['irep'])
+        self.assertEqual(hex(irep), prep['irep'])
 
         self.refund_icx(accounts)
 
@@ -135,8 +131,7 @@ class TestSetIRep(Base):
         accounts: List['Account'] = self.create_accounts(account_count)
 
         iiss_info1 = self.get_iiss_info()
-        irep = iiss_info1['variable']['irep']
-        self.assertEqual(IISS_MIN_IREP, int(irep, 16))
+        initial_irep = int(iiss_info1['variable']['irep'], 16)
 
         # create
         self.distribute_icx(accounts, init_balance)
@@ -145,14 +140,14 @@ class TestSetIRep(Base):
         self.register_prep(accounts[:1])
 
         prep0 = self.get_prep(accounts[0])
-        self.assertEqual(hex(IISS_MIN_IREP), prep0['irep'])
+        self.assertEqual(hex(initial_irep), prep0['irep'])
         self._make_blocks_to_end_calculation()
 
         tx_list = []
-        # try to set irep to IISS_MIN_IREP*1.1(irep set)
-        irep = IISS_MIN_IREP * 11 // 10
+        # try to set irep to IISS_INITIAL_IREP*1.1(irep set)
+        irep = initial_irep * 11 // 10
         tx_list.append(self.create_set_governance_variables_tx(accounts[0], irep))
-        # try to set irep to IISS_MIN_IREP*1.1*1.1(will be failed. set irep twice in a term)
+        # try to set irep to IISS_INITIAL_IREP*1.1*1.1(will be failed. set irep twice in a term)
         irep = irep * 11 // 10
         tx_list.append(self.create_set_governance_variables_tx(accounts[0], irep))
         tx_hashes = self.process_transaction_bulk_without_txresult(tx_list, self.icon_service)
@@ -168,7 +163,7 @@ class TestSetIRep(Base):
         accounts[0].balance -= tx_result['stepUsed'] * tx_result['stepPrice']
 
         # check irep
-        expected_irep = IISS_MIN_IREP * 11 // 10
+        expected_irep = initial_irep * 11 // 10
         prep = self.get_prep(accounts[0])
         self.assertEqual(hex(expected_irep), prep['irep'])
 

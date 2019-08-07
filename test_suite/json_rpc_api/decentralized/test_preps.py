@@ -1,7 +1,5 @@
 from typing import List, Tuple
 
-from iconservice.icon_constant import IISS_MIN_IREP
-
 from test_suite.json_rpc_api.base import Base, ICX_FACTOR, Account, PREP_REGISTER_COST_ICX
 
 
@@ -12,10 +10,6 @@ class TestPRepChange(Base):
         init_balance: int = (PREP_REGISTER_COST_ICX + 201) * ICX_FACTOR
         account_count: int = 100
         accounts: List['Account'] = self.create_accounts(account_count)
-
-        iiss_info1 = self.get_iiss_info()
-        irep = iiss_info1['variable']['irep']
-        self.assertEqual(IISS_MIN_IREP, int(irep, 16))
 
         # create
         self.distribute_icx(accounts, init_balance)

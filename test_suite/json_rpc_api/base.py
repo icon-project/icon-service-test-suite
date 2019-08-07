@@ -117,7 +117,6 @@ class Base(IconIntegrateTestBase):
 
         return issue_data_of_term, calulated_issue_amount, actual_issue_amount
 
-
     @staticmethod
     def create_deploy_score_tx(score_path: str,
                                from_: 'Account',
@@ -271,14 +270,12 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_set_prep_tx(from_: 'Account',
-                           irep: int = None,
                            set_data: Dict[str, Union[str, bytes]] = None,
                            value: int = 0,
                            step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                            nid: int = DEFAULT_NID,
                            nonce: int = 0) -> 'SignedTransaction':
         transaction: 'Transaction' = Base.create_set_prep_tx_without_sign(from_,
-                                                                          irep,
                                                                           set_data,
                                                                           value,
                                                                           step_limit,
@@ -289,7 +286,6 @@ class Base(IconIntegrateTestBase):
 
     @staticmethod
     def create_set_prep_tx_without_sign(from_: 'Account',
-                                        irep: int = None,
                                         set_data: Dict[str, Union[str, bytes]] = None,
                                         value: int = 0,
                                         step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
@@ -297,8 +293,6 @@ class Base(IconIntegrateTestBase):
                                         nonce: int = 0) -> 'Transaction':
         if set_data is None:
             set_data = {}
-        if irep is not None:
-            set_data[ConstantKeys.IREP] = hex(irep)
 
         return CallTransactionBuilder(). \
             from_(from_.wallet.get_address()). \
@@ -317,13 +311,12 @@ class Base(IconIntegrateTestBase):
                                            step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                            nid: int = DEFAULT_NID,
                                            nonce: int = 0) -> 'SignedTransaction':
-        transaction: 'Transaction' = Base.create_set_governance_variables_tx_without_sign(
-            from_,
-            irep,
-            step_limit,
-            0,
-            nid,
-            nonce)
+        transaction: 'Transaction' = Base.create_set_governance_variables_tx_without_sign(from_,
+                                                                                          irep,
+                                                                                          step_limit,
+                                                                                          0,
+                                                                                          nid,
+                                                                                          nonce)
         signed_transaction = SignedTransaction(transaction, from_.wallet)
         return signed_transaction
 
@@ -333,7 +326,7 @@ class Base(IconIntegrateTestBase):
                                                         step_limit: int = DEFAULT_SCORE_CALL_STEP_LIMIT,
                                                         value: int = 0,
                                                         nid: int = DEFAULT_NID,
-                                                        nonce: int = 0) -> 'SignedTransaction':
+                                                        nonce: int = 0) -> 'Transaction':
         return CallTransactionBuilder().\
             from_(from_.wallet.get_address()).\
             to(SYSTEM_ADDRESS).\
