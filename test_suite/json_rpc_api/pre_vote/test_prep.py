@@ -267,3 +267,36 @@ class TestPRep(Base):
         self.assertEqual("USA", prep1[ConstantKeys.COUNTRY])
 
         self.refund_icx(accounts)
+
+    def test_get_prep(self):
+        init_balance: int = (PREP_REGISTER_COST_ICX + 101) * ICX_FACTOR
+        account_count: int = 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register prep account0
+        self.register_prep(accounts[:1])
+
+        response: dict = self.get_prep(accounts[0])
+        self.assertEqual(0, int(response["delegated"], 16))
+
+        # stake 100 icx each accounts
+        stake_value: int = 100 * ICX_FACTOR
+        self.set_stake(accounts[:1], stake_value)
+
+        # delegate 1 icx
+        delegation_value: int = 1 * ICX_FACTOR
+        delegate_info: List[Tuple['Account', int]] = [(accounts[0], delegation_value)]
+        self.set_delegation(accounts[:1], [delegate_info])
+
+        response: dict = self.get_prep(accounts[0])
+        self.assertEqual(delegation_value, int(response["delegated"], 16))
+
+        # delegate 2 icx
+        delegation_value: int = 1 * ICX_FACTOR
+        delegate_info: List[Tuple['Account', int]] = [(accounts[0], delegation_value)]
+        self.set_delegation(accounts[:1], [delegate_info])
+
+        response: dict = self.get_prep(accounts[0])
+        self.assertEqual(delegation_value, int(response["delegated"], 16))
