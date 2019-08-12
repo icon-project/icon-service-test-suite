@@ -19,7 +19,8 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         # in the term 0, only delegate reward (beta3) is provided
         term0_info: dict = self.get_iiss_info()
         print(f"###################################################################################################")
-        print(f"Term 0 START - start BH: {self._get_block_height()}, end BH: {int(term0_info['nextCalculation'], 16)-1}")
+        print(
+            f"Term 0 START - start BH: {self._get_block_height()}, end BH: {int(term0_info['nextCalculation'], 16) - 1}")
         print(f"IISS START - start BH: {self._get_block_height()}")
         term0_rrep = int(term0_info["variable"]["rrep"], 16)
         term0_irep = int(term0_info["variable"]["irep"], 16)
@@ -126,7 +127,8 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         cumulatived_covered_fee_of_term1 = sum([issue_data[2] for issue_data in issue_data_of_term1])
 
         expected_total_issue_amount_of_term_1 = 202_620_594_000_000_000_000
-        print("calculated issue amount of term 1: ", expected_total_issue_amount_of_term_1, calulated_issue_amount_of_term1)
+        print("calculated issue amount of term 1: ", expected_total_issue_amount_of_term_1,
+              calulated_issue_amount_of_term1)
         # As no diff between IS-RC at the term 0,
         # coverted_fee + actual issue amount should equal to calculated issue amount of term0
         diff_between_is_and_rc_in_term_0 = issue_data_of_term1[-1][3]
@@ -137,7 +139,8 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         treasury_balance_end_term_1: int = self.get_balance(treausury_address)
         total_supply_end_term_1: int = self.icon_service.get_total_supply()
         iconist_i_score_result_end_term_1 = int(self.query_iscore(iconist)['estimatedICX'], 16)
-        total_iscore_of_all_iconist_end_term_1 = sum(map(lambda iconist: int(self.query_iscore(iconist)['estimatedICX'], 16), iconist_accounts))
+        total_iscore_of_all_iconist_end_term_1 = sum(
+            map(lambda iconist: int(self.query_iscore(iconist)['estimatedICX'], 16), iconist_accounts))
         main_prep1_i_score_result_end_term_1 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
         main_prep1_info_end_term_1 = self.get_prep(main_prep1)
         sub_prep1_i_score_result_end_term_1 = int(self.query_iscore(sub_prep23)['estimatedICX'], 16)
@@ -201,7 +204,8 @@ class TestIcxIssueAmountAfterDecentralized(Base):
 
         treasury_balance_end_term_2: int = self.get_balance(treausury_address)
         total_supply_end_term_2: int = self.icon_service.get_total_supply()
-        total_iscore_of_all_iconist_end_term_2 = sum(map(lambda iconist: int(self.query_iscore(iconist)['estimatedICX'], 16), iconist_accounts))
+        total_iscore_of_all_iconist_end_term_2 = sum(
+            map(lambda iconist: int(self.query_iscore(iconist)['estimatedICX'], 16), iconist_accounts))
         iconist_i_score_result_end_term_2 = int(self.query_iscore(iconist)['estimatedICX'], 16)
         main_prep1_i_score_result_end_term_2 = int(self.query_iscore(main_prep1)['estimatedICX'], 16)
         main_prep1_info_end_term_2 = self.get_prep(main_prep1)
@@ -242,5 +246,3 @@ class TestIcxIssueAmountAfterDecentralized(Base):
         sub_prep_actual_validate_blocks = int(sub_prep23_info_end_term_1['validatedBlocks'], 16)
         self.assertEqual(0, sub_prep_actual_total_blocks)
         self.assertEqual(0, sub_prep_actual_validate_blocks)
-
-

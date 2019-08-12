@@ -374,3 +374,50 @@ class TestIScore(Base):
 
         # refund icx
         self.refund_icx(accounts)
+
+    def test_iscore_claim_tx_failure(self):
+        treasury_address: str = "hx1000000000000000000000000000000000000000"
+        init_balance: int = self.get_balance(self.load_admin()) // 4
+        stake_value: int = init_balance - 100 * ICX_FACTOR
+        account_count: int = 2
+        accounts: List['Account'] = self.create_accounts(account_count)
+        iconist: 'Account' = accounts[0]
+
+        self.distribute_icx(accounts, init_balance)
+
+        # register P-Rep
+        self.register_prep(accounts[1:])
+
+        # setStake
+        self.set_stake(accounts[:1], stake_value)
+
+        # delegate to P-Rep
+        origin_delegations: list = [(accounts[1], stake_value)]
+        self.set_delegation(accounts[:1], [origin_delegations])
+
+        iconist_balance_before_claim: int = self.get_balance(iconist)
+        while True:
+            self._make_blocks_to_end_calculation()
+            reward: int = int(self.query_iscore(iconist)['estimatedICX'], 16)
+            treasury_balance_before_claim: int = self.get_balance(treasury_address)
+            if reward > treasury_balance_before_claim:
+                break
+        iconist_rc_balance_before_claim: int = int(self.query_iscore(iconist)['estimatedICX'], 16)
+
+        # create claim transaction which will be failed
+        tx: 'SignedTransaction' = self.create_claim_iscore_tx(iconist)
+        tx_hashes: list = self.process_transaction_bulk_without_txresult([tx], self.icon_service)
+        self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
+        tx_results: list = self.get_txresults(self.icon_service, tx_hashes)
+        iconist_balance_after_claim: int = self.get_balance(iconist)
+        iconist_rc_balance_after_claim: int = int(self.query_iscore(iconist)['estimatedICX'], 16)
+        treasury_balance_after_claim: int = self.get_balance(treasury_address)
+
+        # check the balance of treasury, iconist balance
+        self.assertEqual(iconist_rc_balance_before_claim, iconist_rc_balance_after_claim)
+        self.assertEqual(iconist_balance_after_claim + (tx_results[0]["stepUsed"] * tx_results[0]["stepPrice"]),
+                         iconist_balance_before_claim)
+
+        self.assertEqual(treasury_balance_before_claim, treasury_balance_after_claim)
+
+        self.refund_icx(accounts)
