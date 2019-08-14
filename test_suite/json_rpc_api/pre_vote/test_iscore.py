@@ -412,12 +412,14 @@ class TestIScore(Base):
         iconist_balance_after_claim: int = self.get_balance(iconist)
         iconist_rc_balance_after_claim: int = int(self.query_iscore(iconist)['estimatedICX'], 16)
         treasury_balance_after_claim: int = self.get_balance(treasury_address)
+        claim_iscore_fee: int = tx_results[0]['stepUsed'] * tx_results[0]['stepPrice']
+        iconist.balance -= claim_iscore_fee
 
         # check the balance of treasury, iconist balance
         self.assertEqual(iconist_rc_balance_before_claim, iconist_rc_balance_after_claim)
         self.assertEqual(iconist_balance_after_claim + (tx_results[0]["stepUsed"] * tx_results[0]["stepPrice"]),
                          iconist_balance_before_claim)
 
-        self.assertEqual(treasury_balance_before_claim, treasury_balance_after_claim)
+        self.assertEqual(treasury_balance_before_claim, treasury_balance_after_claim - claim_iscore_fee)
 
         self.refund_icx(accounts)
