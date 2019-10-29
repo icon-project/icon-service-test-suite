@@ -80,7 +80,7 @@ class TestPRep(Base):
         # getPRepList
         preps = self.get_prep_list()['preps']
         prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
-        self.assertIn(accounts[0].wallet.address, prep_addresses)
+        self.assertIn(accounts[0].wallet.get_address(), prep_addresses)
 
         # getSubPRepList
         sub_preps = self.get_sub_prep_list()['preps']
@@ -97,7 +97,7 @@ class TestPRep(Base):
         preps = self.get_prep_list()['preps']
         prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
         for account in accounts[:10]:
-            self.assertIn(account.wallet.address, prep_addresses)
+            self.assertIn(account.wallet.get_address(), prep_addresses)
 
         # getSubPRepList
         sub_preps = self.get_sub_prep_list()['preps']
@@ -114,7 +114,7 @@ class TestPRep(Base):
         preps = self.get_prep_list()['preps']
         prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
         for i, account in enumerate(accounts):
-            self.assertIn(account.wallet.address, prep_addresses)
+            self.assertIn(account.wallet.get_address(), prep_addresses)
 
         # getSubPRepList
         sub_preps = self.get_sub_prep_list()['preps']
@@ -147,13 +147,13 @@ class TestPRep(Base):
         preps = preps_info['preps']
         prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
         for i, account in enumerate(reversed(accounts)):
-            self.assertEqual(account.wallet.address, prep_addresses[i])
+            self.assertEqual(account.wallet.get_address(), prep_addresses[i])
 
         preps_info = self.get_prep_list(1, 20)
         preps = preps_info['preps']
         prep_addresses = list(map(lambda prep_list: prep_list['address'], preps))
         for i, account in enumerate(reversed(accounts[80:100])):
-            self.assertEqual(account.wallet.address, prep_addresses[i])
+            self.assertEqual(account.wallet.get_address(), prep_addresses[i])
 
         # unregister preps
         tx_list = []

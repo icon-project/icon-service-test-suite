@@ -90,6 +90,7 @@ class TestIScore(Base):
         iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height, rrep)
 
         # queryIScore
+        self._make_blocks(self._get_block_height()+1)
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1), response['iscore'])
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
@@ -100,6 +101,7 @@ class TestIScore(Base):
         iscore3: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height, rrep)
 
         # queryIScore
+        self._make_blocks(self._get_block_height()+1)
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1 + iscore2), response['iscore'])
         self.assertEqual(hex(calculate2_block_height), response['blockHeight'])
@@ -117,6 +119,7 @@ class TestIScore(Base):
         self._make_blocks_to_end_calculation()
 
         # queryIScore
+        self._make_blocks(self._get_block_height()+1)
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore_after_claim + iscore3), response['iscore'])
         self.assertEqual(hex(calculate3_block_height), response['blockHeight'])
@@ -171,6 +174,7 @@ class TestIScore(Base):
         last_iscore: int = 0
         for i in range(1):
             self._make_blocks_to_end_calculation()
+            self._make_blocks(self._get_block_height() + 1)
             response: dict = self.query_iscore(accounts[0])
             iscore: int = int(response['iscore'], 16)
             self.assertNotEqual(0, iscore)
@@ -222,6 +226,7 @@ class TestIScore(Base):
 
         for i in range(10):
             self._make_blocks_to_end_calculation()
+            self._make_blocks(self._get_block_height() + 1)
             self.claim_iscore(accounts)
 
         # refund icx
@@ -260,6 +265,7 @@ class TestIScore(Base):
 
         for i in range(10):
             self._make_blocks_to_end_calculation()
+            self._make_blocks(self._get_block_height() + 1)
             self.claim_iscore(accounts)
             response: dict = self.query_iscore(accounts[0])
             self.assertTrue(int(response['iscore'], 16) < 1000)
@@ -325,6 +331,7 @@ class TestIScore(Base):
         iscore2: int = self._calculate_iscore(delegation_value, calculate1_block_height, calculate2_block_height, rrep)
 
         # queryIScore
+        self._make_blocks(self._get_block_height()+1)
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1), response['iscore'])
         self.assertEqual(hex(calculate1_block_height), response['blockHeight'])
@@ -335,6 +342,7 @@ class TestIScore(Base):
         _: int = self._calculate_iscore(delegation_value, calculate2_block_height, calculate3_block_height, rrep)
 
         # queryIScore
+        self._make_blocks(self._get_block_height()+1)
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1 + iscore2), response['iscore'])
         self.assertEqual(hex(calculate2_block_height), response['blockHeight'])
@@ -369,6 +377,7 @@ class TestIScore(Base):
         self.assertEqual(expected_balance, actual_balance)
 
         # queryIScore
+        self._make_blocks(self._get_block_height()+1)
         response: dict = self.query_iscore(accounts[0])
         self.assertEqual(hex(iscore1 + iscore2 - expected_claimed_iscore), response['iscore'])
 
@@ -398,6 +407,7 @@ class TestIScore(Base):
         iconist_balance_before_claim: int = self.get_balance(iconist)
         while True:
             self._make_blocks_to_end_calculation()
+            self._make_blocks(self._get_block_height() + 1)
             reward: int = int(self.query_iscore(iconist)['estimatedICX'], 16)
             treasury_balance_before_claim: int = self.get_balance(treasury_address)
             if reward > treasury_balance_before_claim:

@@ -2,7 +2,7 @@ import os
 
 from typing import TYPE_CHECKING
 from iconsdk.signed_transaction import SignedTransaction
-from iconservice.icon_constant import REV_IISS
+from iconservice.icon_constant import Revision
 
 from .json_rpc_api.base import Base, GOVERNANCE_ADDRESS
 
@@ -34,7 +34,7 @@ class TestInit(Base):
             for tx_result in tx_results:
                 self.assertEqual(True, tx_result['status'])
 
-        tx: 'SignedTransaction' = self.create_set_revision_tx(admin, REV_IISS)
+        tx: 'SignedTransaction' = self.create_set_revision_tx(admin, Revision.IISS.value)
         tx_hashes: list = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account([admin]))
         tx_results: list = self.get_txresults(self.icon_service, tx_hashes)

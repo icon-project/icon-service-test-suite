@@ -38,7 +38,7 @@ class TestPRepChange(Base):
         # check if account0 in main preps
         main_preps = self.get_main_prep_list()
         main_preps = list(map(lambda prep_info: prep_info['address'], main_preps['preps']))
-        self.assertIn(accounts[0].wallet.address, main_preps)
+        self.assertIn(accounts[0].wallet.get_address(), main_preps)
 
         # register prep account1-99
         self.register_prep(accounts[1:])
@@ -63,7 +63,7 @@ class TestPRepChange(Base):
         main_preps = self.get_main_prep_list()
         main_preps = list(map(lambda prep_info: prep_info['address'], main_preps['preps']))
         for i, account in enumerate(reversed(accounts[-22:])):
-            self.assertEqual(account.wallet.address, main_preps[i])
+            self.assertEqual(account.wallet.get_address(), main_preps[i])
 
         # unregister main preps 1st - 10th
         tx_list = [self.create_unregister_prep_tx(prep) for prep in reversed(accounts[-10:])]
@@ -79,6 +79,6 @@ class TestPRepChange(Base):
         main_preps = self.get_main_prep_list()
         main_preps = list(map(lambda prep_info: prep_info['address'], main_preps['preps']))
         for i, account in enumerate(reversed(accounts[68:90])):
-            self.assertEqual(account.wallet.address, main_preps[i])
+            self.assertEqual(account.wallet.get_address(), main_preps[i])
 
         self.refund_icx(accounts)

@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from iconservice.icon_constant import REV_DECENTRALIZATION, PREP_MAIN_PREPS
+from iconservice.icon_constant import Revision, PREP_MAIN_PREPS
 
 from test_suite.json_rpc_api.base import ICX_FACTOR, Account, PREP_REGISTER_COST_ICX, Base
 
@@ -50,7 +50,7 @@ class TestDecentralization1(Base):
         self.assertEqual(expected_response, response)
 
         # set Revision REV_IISS (decentralization)
-        tx = self.create_set_revision_tx(builtin_owner, REV_DECENTRALIZATION)
+        tx = self.create_set_revision_tx(builtin_owner, Revision.DECENTRALIZATION.value)
         tx_hashes = self.process_transaction_without_txresult(tx, self.icon_service)
         self.process_confirm_block_tx(self.icon_service, self.sleep_ratio_from_account(accounts))
         tx_results = self.get_txresults(self.icon_service, tx_hashes)
@@ -65,7 +65,7 @@ class TestDecentralization1(Base):
         expected_total_delegated: int = 0
         for prep in main_preps:
             expected_preps.append({
-                'address': prep.wallet.address,
+                'address': prep.wallet.get_address(),
                 'delegated': hex(minimum_delegate_amount_for_decentralization)
             })
             expected_total_delegated += minimum_delegate_amount_for_decentralization
